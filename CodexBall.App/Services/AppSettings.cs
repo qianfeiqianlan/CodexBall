@@ -8,7 +8,7 @@ public sealed class AppSettings
 
     public bool AlwaysOnTop { get; set; } = true;
 
-    public bool EdgeHideEnabled { get; set; } = true;
+    public bool EdgeHideEnabled { get; set; }
 
     public double Opacity { get; set; } = 1.0;
 }
