@@ -1,0 +1,90 @@
+<Window x:Class="CodexBall.App.UsagePopup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Codex Usage"
+        Width="292"
+        Height="244"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True">
+    <Border Background="#F01B1F26"
+            BorderBrush="#33404C"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="16">
+        <StackPanel>
+            <TextBlock Text="Codex"
+                       Foreground="White"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,14" />
+
+            <Grid Margin="0,0,0,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding ShortWindowLabel}"
+                           Foreground="#D7DEE8"
+                           FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding ShortWindowPercent}"
+                           Foreground="#D7DEE8" />
+                <ProgressBar Grid.Row="1"
+                             Grid.ColumnSpan="2"
+                             Value="{Binding ShortWindowProgress}"
+                             Maximum="100"
+                             Height="6"
+                             Margin="0,6,0,0" />
+                <TextBlock Grid.Row="2"
+                           Grid.ColumnSpan="2"
+                           Text="{Binding ShortWindowReset}"
+                           Foreground="#9CA8B6"
+                           FontSize="12"
+                           Margin="0,8,0,0" />
+            </Grid>
+
+            <Grid Margin="0,0,0,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding LongWindowLabel}"
+                           Foreground="#D7DEE8"
+                           FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding LongWindowPercent}"
+                           Foreground="#D7DEE8" />
+                <ProgressBar Grid.Row="1"
+                             Grid.ColumnSpan="2"
+                             Value="{Binding LongWindowProgress}"
+                             Maximum="100"
+                             Height="6"
+                             Margin="0,6,0,0" />
+                <TextBlock Grid.Row="2"
+                           Grid.ColumnSpan="2"
+                           Text="{Binding LongWindowReset}"
+                           Foreground="#9CA8B6"
+                           FontSize="12"
+                           Margin="0,8,0,0" />
+            </Grid>
+
+            <TextBlock Text="{Binding LastUpdatedText}"
+                       Foreground="#7F8B99"
+                       FontSize="12" />
+        </StackPanel>
+    </Border>
+</Window>

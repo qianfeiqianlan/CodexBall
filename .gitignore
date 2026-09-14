@@ -1,0 +1,21 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.rsuser
+TestResults/
+*.nupkg
+*.snupkg
+*.log
+*.tmp
+*.bak
+
+# Publish output
+publish/
+*.zip
+
+# Local runtime config/state
+.env
+.env.*
