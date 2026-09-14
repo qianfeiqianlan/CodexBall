@@ -19,7 +19,7 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public StatusBallViewModel()
     {
-        _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
+        _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
         _pollTimer.Tick += async (_, _) => await RefreshAsync();
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };

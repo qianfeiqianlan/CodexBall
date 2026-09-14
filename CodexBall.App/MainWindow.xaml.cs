@@ -241,6 +241,7 @@ public partial class MainWindow : Window
 
         _settings.EdgeHideEnabled = enabled;
         await SavePositionAsync();
+        await _viewModel.RefreshAsync();
     }
 
     private void EnterEdgeHideMode(bool animate)
