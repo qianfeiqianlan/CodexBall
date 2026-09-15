@@ -16,16 +16,20 @@ public sealed class TrayIconService : IDisposable
 {
     private readonly StatusBallViewModel _viewModel;
     private readonly Window _window;
+    private readonly UpdateService _updateService;
     private readonly Icon _defaultIcon;
     private readonly WinForms.NotifyIcon _notifyIcon;
     private readonly WinForms.ToolStripMenuItem _statusItem;
+    private readonly WinForms.ToolStripMenuItem _upgradeItem;
+    private readonly WinForms.ToolStripMenuItem _versionItem;
     private bool _disposed;
     private Icon? _dynamicIcon;
 
-    public TrayIconService(StatusBallViewModel viewModel, Window window)
+    public TrayIconService(StatusBallViewModel viewModel, Window window, UpdateService updateService)
     {
         _viewModel = viewModel;
         _window = window;
+        _updateService = updateService;
         _defaultIcon = LoadDefaultIcon();
 
         _statusItem = new WinForms.ToolStripMenuItem("Waiting for Codex") { Enabled = false };
@@ -41,6 +45,14 @@ public sealed class TrayIconService : IDisposable
                 _window.Activate();
             }
         };
+
+        var homeItem = new WinForms.ToolStripMenuItem("Home");
+        homeItem.Click += (_, _) => ProjectHomeService.Open();
+
+        _upgradeItem = new WinForms.ToolStripMenuItem("Upgrade") { Visible = false };
+        _upgradeItem.Click += async (_, _) => await StartUpgradeAsync();
+
+        _versionItem = new WinForms.ToolStripMenuItem($"Version {_updateService.CurrentVersionText}") { Enabled = false };
 
         var exitItem = new WinForms.ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => WpfApplication.Current.Shutdown();
@@ -58,8 +70,12 @@ public sealed class TrayIconService : IDisposable
             new WinForms.ToolStripSeparator(),
             refreshItem,
             showItem,
+            homeItem,
+            _upgradeItem,
             new WinForms.ToolStripSeparator(),
-            exitItem
+            exitItem,
+            new WinForms.ToolStripSeparator(),
+            _versionItem
         ]);
         _notifyIcon.DoubleClick += (_, _) =>
         {
@@ -72,7 +88,35 @@ public sealed class TrayIconService : IDisposable
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.CodexActivityChanged += OnCodexActivityChanged;
+        _updateService.StateChanged += OnUpdateStateChanged;
         UpdateIcon();
+        UpdateUpgradeState();
+    }
+
+    private async Task StartUpgradeAsync()
+    {
+        try
+        {
+            await _updateService.StartUpgradeAsync();
+            WpfApplication.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            WinForms.MessageBox.Show(ex.Message, "CodexBall Upgrade", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+        }
+    }
+
+    private void OnUpdateStateChanged(object? sender, EventArgs e)
+        => WpfApplication.Current.Dispatcher.Invoke(UpdateUpgradeState);
+
+    private void UpdateUpgradeState()
+    {
+        _upgradeItem.Visible = _updateService.IsUpgradeAvailable;
+        _upgradeItem.Enabled = !_updateService.IsUpgradeInProgress;
+        _upgradeItem.Text = _updateService.LatestVersionText is null
+            ? "Upgrade"
+            : $"Upgrade to {_updateService.LatestVersionText}";
+        _versionItem.Text = $"Version {_updateService.CurrentVersionText}";
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -182,6 +226,7 @@ public sealed class TrayIconService : IDisposable
         _disposed = true;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.CodexActivityChanged -= OnCodexActivityChanged;
+        _updateService.StateChanged -= OnUpdateStateChanged;
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
         _dynamicIcon?.Dispose();

@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private readonly StatusBallViewModel _viewModel;
     private readonly SettingsService _settingsService;
     private readonly StartupService _startupService = new();
+    private readonly UpdateService _updateService;
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _peekTimer;
     private Point _mouseDownPosition;
@@ -35,10 +36,11 @@ public partial class MainWindow : Window
     private HwndSource? _hwndSource;
     private UsagePopup? _popup;
 
-    public MainWindow(StatusBallViewModel viewModel, SettingsService settingsService, AppSettings settings)
+    public MainWindow(StatusBallViewModel viewModel, SettingsService settingsService, AppSettings settings, UpdateService updateService)
     {
         _viewModel = viewModel;
         _settingsService = settingsService;
+        _updateService = updateService;
         _settings = settings;
         DataContext = viewModel;
         InitializeComponent();
@@ -180,8 +182,29 @@ public partial class MainWindow : Window
             launchAtStartup.IsChecked = _startupService.IsEnabled();
         };
 
+        var home = new MenuItem { Header = "Home" };
+        home.Click += (_, _) => ProjectHomeService.Open();
+
+        var upgrade = new MenuItem { Header = "Upgrade", Visibility = Visibility.Collapsed };
+        upgrade.Click += async (_, _) => await StartUpgradeAsync();
+
+        var version = new MenuItem { Header = $"Version {_updateService.CurrentVersionText}", IsEnabled = false };
+
         var exit = new MenuItem { Header = "Exit" };
         exit.Click += (_, _) => Application.Current.Shutdown();
+
+        void UpdateUpgradeState()
+        {
+            upgrade.Visibility = _updateService.IsUpgradeAvailable ? Visibility.Visible : Visibility.Collapsed;
+            upgrade.IsEnabled = !_updateService.IsUpgradeInProgress;
+            upgrade.Header = _updateService.LatestVersionText is null
+                ? "Upgrade"
+                : $"Upgrade to {_updateService.LatestVersionText}";
+            version.Header = $"Version {_updateService.CurrentVersionText}";
+        }
+
+        _updateService.StateChanged += (_, _) => Dispatcher.Invoke(UpdateUpgradeState);
+        UpdateUpgradeState();
 
         var menu = new ContextMenu
         {
@@ -192,7 +215,12 @@ public partial class MainWindow : Window
                 edgeHide,
                 launchAtStartup,
                 new Separator(),
-                exit
+                home,
+                upgrade,
+                new Separator(),
+                exit,
+                new Separator(),
+                version
             }
         };
         menu.Opened += (_, _) =>
@@ -201,6 +229,19 @@ public partial class MainWindow : Window
             launchAtStartup.IsChecked = _startupService.IsEnabled();
         };
         return menu;
+    }
+
+    private async Task StartUpgradeAsync()
+    {
+        try
+        {
+            await _updateService.StartUpgradeAsync();
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(this, ex.Message, "CodexBall Upgrade", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void TogglePopup()

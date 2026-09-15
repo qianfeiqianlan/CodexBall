@@ -2,6 +2,7 @@
 
 [![Build and test](https://github.com/qianfeiqianlan/CodexBall/actions/workflows/build-test.yml/badge.svg)](https://github.com/qianfeiqianlan/CodexBall/actions/workflows/build-test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Download](https://img.shields.io/badge/Download-Releases-blue.svg)](https://github.com/qianfeiqianlan/CodexBall/releases)
 
 CodexBall is a Windows-first desktop widget for keeping an eye on Codex rate-limit status.
 

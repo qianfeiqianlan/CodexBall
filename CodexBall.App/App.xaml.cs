@@ -28,11 +28,12 @@ public partial class App : Application
         var settingsService = new SettingsService();
         var settings = await settingsService.LoadAsync();
         var processMonitor = new CodexProcessMonitor();
+        var updateService = new UpdateService();
         _viewModel = new StatusBallViewModel(processMonitor);
 
-        var window = new MainWindow(_viewModel, settingsService, settings);
+        var window = new MainWindow(_viewModel, settingsService, settings, updateService);
         MainWindow = window;
-        _trayIconService = new TrayIconService(_viewModel, window);
+        _trayIconService = new TrayIconService(_viewModel, window, updateService);
         _viewModel.CodexActivityChanged += (_, isActive) =>
         {
             if (isActive)
@@ -45,6 +46,7 @@ public partial class App : Application
             }
         };
 
+        _ = updateService.CheckForUpdatesAsync();
         await _viewModel.StartAsync();
     }
 
