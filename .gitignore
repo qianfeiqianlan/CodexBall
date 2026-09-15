@@ -2,20 +2,32 @@ bin/
 obj/
 .vs/
 .vscode/
+.idea/
 *.user
 *.suo
 *.rsuser
+*.userosscache
+*.sln.docstates
 TestResults/
+coverage/
+*.coverage
+*.coveragexml
 *.nupkg
 *.snupkg
 *.log
 *.tmp
 *.bak
+Thumbs.db
+.DS_Store
 
 # Publish output
 publish/
 *.zip
+*.msix
+*.msixbundle
+*.appinstaller
 
 # Local runtime config/state
 .env
 .env.*
+appsettings.Local.json
