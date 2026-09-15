@@ -38,6 +38,12 @@ dotnet test
 dotnet run --project .\CodexBall.App
 ```
 
+## Download
+
+For published builds, download the latest `CodexBall-*-win-x64.zip` from GitHub Releases, unzip it, and run `CodexBall.exe`.
+
+Windows may show a SmartScreen warning for unsigned community builds. Check that the zip came from this repository's Releases page before running it.
+
 ## Privacy And Security Boundaries
 
 CodexBall is intentionally small and local:
