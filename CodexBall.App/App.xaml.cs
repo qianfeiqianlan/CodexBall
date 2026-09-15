@@ -2,6 +2,7 @@ using System.Threading;
 using System.Windows;
 using CodexBall.App.Services;
 using CodexBall.App.ViewModels;
+using Application = System.Windows.Application;
 
 namespace CodexBall.App;
 
@@ -10,6 +11,7 @@ public partial class App : Application
     private Mutex? _singleInstanceMutex;
     private bool _ownsSingleInstanceMutex;
     private StatusBallViewModel? _viewModel;
+    private TrayIconService? _trayIconService;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -25,11 +27,23 @@ public partial class App : Application
         _ownsSingleInstanceMutex = true;
         var settingsService = new SettingsService();
         var settings = await settingsService.LoadAsync();
-        _viewModel = new StatusBallViewModel();
+        var processMonitor = new CodexProcessMonitor();
+        _viewModel = new StatusBallViewModel(processMonitor);
 
         var window = new MainWindow(_viewModel, settingsService, settings);
         MainWindow = window;
-        window.Show();
+        _trayIconService = new TrayIconService(_viewModel, window);
+        _viewModel.CodexActivityChanged += (_, isActive) =>
+        {
+            if (isActive)
+            {
+                window.ShowForCodex();
+            }
+            else
+            {
+                window.HideForCodex();
+            }
+        };
 
         await _viewModel.StartAsync();
     }
@@ -40,6 +54,8 @@ public partial class App : Application
         {
             await _viewModel.DisposeAsync();
         }
+
+        _trayIconService?.Dispose();
 
         if (_ownsSingleInstanceMutex)
         {

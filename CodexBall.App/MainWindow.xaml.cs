@@ -7,6 +7,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using CodexBall.App.Services;
 using CodexBall.App.ViewModels;
+using Application = System.Windows.Application;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using Point = System.Windows.Point;
 
 namespace CodexBall.App;
 
@@ -20,6 +23,7 @@ public partial class MainWindow : Window
 
     private readonly StatusBallViewModel _viewModel;
     private readonly SettingsService _settingsService;
+    private readonly StartupService _startupService = new();
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _peekTimer;
     private Point _mouseDownPosition;
@@ -169,6 +173,13 @@ public partial class MainWindow : Window
             await SetEdgeHideModeAsync(edgeHide.IsChecked);
         };
 
+        var launchAtStartup = new MenuItem { Header = "Launch at Startup", IsCheckable = true, IsChecked = _startupService.IsEnabled() };
+        launchAtStartup.Click += (_, _) =>
+        {
+            _startupService.SetEnabled(launchAtStartup.IsChecked);
+            launchAtStartup.IsChecked = _startupService.IsEnabled();
+        };
+
         var exit = new MenuItem { Header = "Exit" };
         exit.Click += (_, _) => Application.Current.Shutdown();
 
@@ -179,11 +190,16 @@ public partial class MainWindow : Window
                 refresh,
                 alwaysOnTop,
                 edgeHide,
+                launchAtStartup,
                 new Separator(),
                 exit
             }
         };
-        menu.Opened += (_, _) => edgeHide.IsChecked = _settings.EdgeHideEnabled;
+        menu.Opened += (_, _) =>
+        {
+            edgeHide.IsChecked = _settings.EdgeHideEnabled;
+            launchAtStartup.IsChecked = _startupService.IsEnabled();
+        };
         return menu;
     }
 
@@ -218,6 +234,22 @@ public partial class MainWindow : Window
             }
         };
         _popup.Show();
+    }
+
+    public void ShowForCodex()
+    {
+        if (!IsVisible)
+        {
+            Show();
+        }
+    }
+
+    public void HideForCodex()
+    {
+        _popup?.Close();
+        _popup = null;
+        _peekTimer.Stop();
+        Hide();
     }
 
     private void PlaceAtDefaultTopRight()

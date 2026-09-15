@@ -2,23 +2,29 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using System.Windows.Threading;
+using CodexBall.App.Services;
 using CodexBall.Core.Codex;
 using CodexBall.Core.Models;
 using CodexBall.Core.Utils;
+using Brush = System.Windows.Media.Brush;
+using Color = System.Windows.Media.Color;
 
 namespace CodexBall.App.ViewModels;
 
 public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposable
 {
     private readonly CodexUsageService _usageService = new();
+    private readonly CodexProcessMonitor _processMonitor;
     private readonly DispatcherTimer _pollTimer;
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _debounceTimer;
     private CodexUsageSnapshot _snapshot = CodexUsageSnapshot.Unavailable(AccountState.Unknown, "Loading");
     private bool _isRefreshing;
+    private bool _isCodexActive;
 
-    public StatusBallViewModel()
+    public StatusBallViewModel(CodexProcessMonitor processMonitor)
     {
+        _processMonitor = processMonitor;
         _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
         _pollTimer.Tick += async (_, _) => await RefreshAsync();
 
@@ -40,6 +46,12 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public event EventHandler<bool>? CodexActivityChanged;
+
+    public bool IsCodexActive => _isCodexActive;
+
+    public int? TrayUsagePercent => _isCodexActive ? _snapshot.ShortWindow?.RemainingPercent : null;
 
     public string CenterText => _snapshot.ShortWindow is null ? "--" : _snapshot.ShortWindow.RemainingPercent.ToString();
 
@@ -104,6 +116,14 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
         _isRefreshing = true;
         try
         {
+            if (!_processMonitor.IsCodexRunning())
+            {
+                SetCodexActive(false);
+                await _usageService.StopAsync();
+                return;
+            }
+
+            SetCodexActive(true);
             Snapshot = await _usageService.RefreshAsync();
         }
         finally
@@ -124,6 +144,7 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
     private void NotifyComputedProperties()
     {
         OnPropertyChanged(nameof(CenterText));
+        OnPropertyChanged(nameof(TrayUsagePercent));
         OnPropertyChanged(nameof(Progress));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(RingBrush));
@@ -141,6 +162,19 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    private void SetCodexActive(bool isActive)
+    {
+        if (_isCodexActive == isActive)
+        {
+            return;
+        }
+
+        _isCodexActive = isActive;
+        OnPropertyChanged(nameof(IsCodexActive));
+        OnPropertyChanged(nameof(TrayUsagePercent));
+        CodexActivityChanged?.Invoke(this, isActive);
+    }
 
     public async ValueTask DisposeAsync()
     {

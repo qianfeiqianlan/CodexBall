@@ -42,6 +42,12 @@ public sealed class CodexUsageService : IAsyncDisposable
         }
     }
 
+    public async Task StopAsync()
+    {
+        _initialized = false;
+        await DisposeRpcAsync();
+    }
+
     private async Task<bool> EnsureInitializedAsync(CancellationToken cancellationToken)
     {
         if (_initialized && _rpcClient is not null)
@@ -112,6 +118,6 @@ public sealed class CodexUsageService : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await DisposeRpcAsync();
+        await StopAsync();
     }
 }
