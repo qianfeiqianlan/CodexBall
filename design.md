@@ -1118,7 +1118,7 @@ Reset Sep 18, 14:32
 例如：
 
 ```text
-C:\Users\A\AppData\Local\CodexBall\
+%LOCALAPPDATA%\CodexBall\
 ```
 
 结构：
