@@ -10,6 +10,10 @@ CodexBall is a Windows-first .NET 9 WPF desktop widget for showing Codex rate-li
 - Test: `dotnet test`
 - Run app: `dotnet run --project .\CodexBall.App`
 
+## Git
+
+- Do not proactively push commits, branches, or tags to remote repositories. The user will push remote changes manually unless they explicitly ask the agent to push.
+
 ## Architecture
 
 - `CodexBall.App` owns WPF UI, window behavior, local settings, and view models.
