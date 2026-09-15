@@ -1,5 +1,8 @@
 # CodexBall
 
+[![Build and test](https://github.com/qianfeiqianlan/CodexBall/actions/workflows/build-test.yml/badge.svg)](https://github.com/qianfeiqianlan/CodexBall/actions/workflows/build-test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 CodexBall is a Windows-first desktop widget for keeping an eye on Codex rate-limit status.
 
 It runs as a small 64 x 64 WPF floating ball, can hide near the screen edge, and shows a tray icon with the current short-window remaining percentage while Codex is active.
