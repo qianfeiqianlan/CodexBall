@@ -1,0 +1,26 @@
+<svg width="960" height="540" viewBox="0 0 960 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="540" rx="0" fill="#101418"/>
+  <rect x="0" y="0" width="960" height="540" fill="url(#grid)" opacity="0.22"/>
+  <rect x="612" y="134" width="224" height="168" rx="12" fill="#191F26" stroke="#2B3440"/>
+  <text x="636" y="170" fill="#F4F7FA" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Codex rate limits</text>
+  <text x="636" y="205" fill="#A9B4C0" font-family="Segoe UI, Arial, sans-serif" font-size="13">Short window</text>
+  <rect x="636" y="218" width="168" height="8" rx="4" fill="#303A45"/>
+  <rect x="636" y="218" width="121" height="8" rx="4" fill="#39D98A"/>
+  <text x="636" y="252" fill="#A9B4C0" font-family="Segoe UI, Arial, sans-serif" font-size="13">Long window</text>
+  <rect x="636" y="265" width="168" height="8" rx="4" fill="#303A45"/>
+  <rect x="636" y="265" width="84" height="8" rx="4" fill="#F5BB40"/>
+  <circle cx="554" cy="218" r="36" fill="#161A20" stroke="#39D98A" stroke-width="7"/>
+  <text x="554" y="227" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="middle">72</text>
+  <rect x="720" y="380" width="116" height="36" rx="18" fill="#161A20" stroke="#303A45"/>
+  <circle cx="744" cy="398" r="13" fill="#202832" stroke="#39D98A" stroke-width="3"/>
+  <text x="744" y="403" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="9" font-weight="700" text-anchor="middle">72</text>
+  <text x="764" y="403" fill="#DCE4EC" font-family="Segoe UI, Arial, sans-serif" font-size="13">Tray icon</text>
+  <text x="92" y="170" fill="#F4F7FA" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">CodexBall</text>
+  <text x="94" y="209" fill="#A9B4C0" font-family="Segoe UI, Arial, sans-serif" font-size="18">A tiny Windows widget for Codex rate-limit status.</text>
+  <text x="94" y="250" fill="#DCE4EC" font-family="Segoe UI, Arial, sans-serif" font-size="15">Local-only. No API keys. No browser cookies.</text>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" stroke="#2B3440" stroke-width="1"/>
+    </pattern>
+  </defs>
+</svg>

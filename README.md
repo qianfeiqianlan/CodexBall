@@ -4,6 +4,8 @@ CodexBall is a Windows-first desktop widget for keeping an eye on Codex rate-lim
 
 It runs as a small 64 x 64 WPF floating ball, can hide near the screen edge, and shows a tray icon with the current short-window remaining percentage while Codex is active.
 
+![CodexBall preview](docs/assets/codexball-preview.svg)
+
 ## Features
 
 - Floating always-on-top status ball.
