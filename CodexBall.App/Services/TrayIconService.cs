@@ -75,16 +75,17 @@ public sealed class TrayIconService : IDisposable
             _statusItem,
             new WinForms.ToolStripSeparator(),
             refreshItem,
-            _alwaysOnTopItem,
-            _edgeHideItem,
-            _launchAtStartupItem,
             new WinForms.ToolStripSeparator(),
+            _edgeHideItem,
+            _alwaysOnTopItem,
+            new WinForms.ToolStripSeparator(),
+            _launchAtStartupItem,
             homeItem,
             _upgradeItem,
             new WinForms.ToolStripSeparator(),
-            exitItem,
+            _versionItem,
             new WinForms.ToolStripSeparator(),
-            _versionItem
+            exitItem
         ]);
         _notifyIcon.ContextMenuStrip.Opening += (_, _) => UpdateSettingsState();
 
