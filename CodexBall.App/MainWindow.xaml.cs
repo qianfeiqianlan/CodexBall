@@ -30,7 +30,6 @@ public partial class MainWindow : Window
     private double _visibleLeft;
     private double _visibleTop;
     private HwndSource? _hwndSource;
-    private UsagePopup? _popup;
 
     public MainWindow(StatusBallViewModel viewModel, SettingsService settingsService, AppSettings settings)
     {
@@ -44,7 +43,7 @@ public partial class MainWindow : Window
         _peekTimer.Tick += (_, _) =>
         {
             _peekTimer.Stop();
-            if (_settings.EdgeHideEnabled && _isPeeking && _popup is not { IsVisible: true })
+            if (_settings.EdgeHideEnabled && _isPeeking)
             {
                 SlideToHidden();
             }
@@ -142,50 +141,12 @@ public partial class MainWindow : Window
             CaptureVisiblePosition();
             await SavePositionAsync();
         }
-        else if (e.ClickCount > 1)
+        else if (_settings.EdgeHideEnabled && _isPeeking)
         {
-            base.OnMouseLeftButtonUp(e);
-            return;
-        }
-        else
-        {
-            TogglePopup();
+            _peekTimer.Start();
         }
 
         base.OnMouseLeftButtonUp(e);
-    }
-
-    private void TogglePopup()
-    {
-        if (_settings.EdgeHideEnabled)
-        {
-            PeekFromEdge();
-        }
-
-        _peekTimer.Stop();
-        if (_popup is { IsVisible: true })
-        {
-            _popup.Close();
-            _popup = null;
-            return;
-        }
-
-        _popup = new UsagePopup
-        {
-            DataContext = _viewModel,
-            Owner = this,
-            Left = Math.Min(_visibleLeft + Width + 8, SystemParameters.WorkArea.Right - 292),
-            Top = _visibleTop
-        };
-        _popup.Closed += (_, _) =>
-        {
-            _popup = null;
-            if (_settings.EdgeHideEnabled)
-            {
-                _peekTimer.Start();
-            }
-        };
-        _popup.Show();
     }
 
     public void ShowForCodex()
@@ -198,8 +159,6 @@ public partial class MainWindow : Window
 
     public void HideForCodex()
     {
-        _popup?.Close();
-        _popup = null;
         _peekTimer.Stop();
         Hide();
     }

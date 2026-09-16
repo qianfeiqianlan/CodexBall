@@ -9,6 +9,7 @@ The format is based on Keep a Changelog, and this project uses semantic versioni
 ### Changed
 
 - Consolidated widget actions into the system tray menu and removed the status ball context menu.
+- Removed the status ball click details popup.
 
 ## [0.1.0] - 2026-09-15
 

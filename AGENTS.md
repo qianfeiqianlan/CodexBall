@@ -34,5 +34,4 @@ Keep Codex protocol JSON out of WPF code-behind. UI should consume `StatusBallVi
 
 - Main widget remains 64 x 64 DIP.
 - Preserve transparent, borderless, no-taskbar, always-on-top behavior.
-- Dragging should not trigger the details popup.
 - Settings live under `%LOCALAPPDATA%\CodexBall\settings.json`.
