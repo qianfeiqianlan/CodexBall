@@ -31,9 +31,9 @@ public partial class App : Application
         var updateService = new UpdateService();
         _viewModel = new StatusBallViewModel(processMonitor);
 
-        var window = new MainWindow(_viewModel, settingsService, settings, updateService);
+        var window = new MainWindow(_viewModel, settingsService, settings);
         MainWindow = window;
-        _trayIconService = new TrayIconService(_viewModel, updateService);
+        _trayIconService = new TrayIconService(_viewModel, window, updateService);
         _viewModel.CodexActivityChanged += (_, isActive) =>
         {
             if (isActive)

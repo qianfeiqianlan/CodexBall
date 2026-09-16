@@ -14,7 +14,7 @@ It runs as a small 64 x 64 WPF floating ball, can hide near the screen edge, and
 
 - Floating always-on-top status ball.
 - Details popup for short and long rate-limit windows.
-- System tray icon with refresh, show, and exit actions.
+- System tray icon with refresh, display toggles, launch-at-startup, upgrade, and exit actions.
 - Optional launch-at-startup toggle.
 - Edge-hide behavior for a lightweight desktop presence.
 - Local settings stored under `%LOCALAPPDATA%\CodexBall\settings.json`.

@@ -14,24 +14,43 @@ namespace CodexBall.App.Services;
 public sealed class TrayIconService : IDisposable
 {
     private readonly StatusBallViewModel _viewModel;
+    private readonly MainWindow _window;
     private readonly UpdateService _updateService;
+    private readonly StartupService _startupService = new();
     private readonly Icon _defaultIcon;
     private readonly WinForms.NotifyIcon _notifyIcon;
     private readonly WinForms.ToolStripMenuItem _statusItem;
+    private readonly WinForms.ToolStripMenuItem _alwaysOnTopItem;
+    private readonly WinForms.ToolStripMenuItem _edgeHideItem;
+    private readonly WinForms.ToolStripMenuItem _launchAtStartupItem;
     private readonly WinForms.ToolStripMenuItem _upgradeItem;
     private readonly WinForms.ToolStripMenuItem _versionItem;
     private bool _disposed;
     private Icon? _dynamicIcon;
 
-    public TrayIconService(StatusBallViewModel viewModel, UpdateService updateService)
+    public TrayIconService(StatusBallViewModel viewModel, MainWindow window, UpdateService updateService)
     {
         _viewModel = viewModel;
+        _window = window;
         _updateService = updateService;
         _defaultIcon = LoadDefaultIcon();
 
         _statusItem = new WinForms.ToolStripMenuItem("Waiting for Codex") { Enabled = false };
         var refreshItem = new WinForms.ToolStripMenuItem("Refresh");
         refreshItem.Click += async (_, _) => await _viewModel.RefreshAsync();
+
+        _alwaysOnTopItem = new WinForms.ToolStripMenuItem("Always On Top") { CheckOnClick = true };
+        _alwaysOnTopItem.Click += async (_, _) => await _window.SetAlwaysOnTopAsync(_alwaysOnTopItem.Checked);
+
+        _edgeHideItem = new WinForms.ToolStripMenuItem("Edge Hide (Alt+C)") { CheckOnClick = true };
+        _edgeHideItem.Click += async (_, _) => await _window.SetEdgeHideModeAsync(_edgeHideItem.Checked);
+
+        _launchAtStartupItem = new WinForms.ToolStripMenuItem("Launch at Startup") { CheckOnClick = true };
+        _launchAtStartupItem.Click += (_, _) =>
+        {
+            _startupService.SetEnabled(_launchAtStartupItem.Checked);
+            _launchAtStartupItem.Checked = _startupService.IsEnabled();
+        };
 
         var homeItem = new WinForms.ToolStripMenuItem("Home");
         homeItem.Click += (_, _) => ProjectHomeService.Open();
@@ -56,6 +75,10 @@ public sealed class TrayIconService : IDisposable
             _statusItem,
             new WinForms.ToolStripSeparator(),
             refreshItem,
+            _alwaysOnTopItem,
+            _edgeHideItem,
+            _launchAtStartupItem,
+            new WinForms.ToolStripSeparator(),
             homeItem,
             _upgradeItem,
             new WinForms.ToolStripSeparator(),
@@ -63,10 +86,12 @@ public sealed class TrayIconService : IDisposable
             new WinForms.ToolStripSeparator(),
             _versionItem
         ]);
+        _notifyIcon.ContextMenuStrip.Opening += (_, _) => UpdateSettingsState();
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.CodexActivityChanged += OnCodexActivityChanged;
         _updateService.StateChanged += OnUpdateStateChanged;
+        UpdateSettingsState();
         UpdateIcon();
         UpdateUpgradeState();
     }
@@ -95,6 +120,13 @@ public sealed class TrayIconService : IDisposable
             ? "Upgrade"
             : $"Upgrade to {_updateService.LatestVersionText}";
         _versionItem.Text = $"Version {_updateService.CurrentVersionText}";
+    }
+
+    private void UpdateSettingsState()
+    {
+        _alwaysOnTopItem.Checked = _window.IsAlwaysOnTopEnabled;
+        _edgeHideItem.Checked = _window.IsEdgeHideEnabled;
+        _launchAtStartupItem.Checked = _startupService.IsEnabled();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

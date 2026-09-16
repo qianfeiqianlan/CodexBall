@@ -1,13 +1,11 @@
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using CodexBall.App.Services;
 using CodexBall.App.ViewModels;
-using Application = System.Windows.Application;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
 
@@ -23,8 +21,6 @@ public partial class MainWindow : Window
 
     private readonly StatusBallViewModel _viewModel;
     private readonly SettingsService _settingsService;
-    private readonly StartupService _startupService = new();
-    private readonly UpdateService _updateService;
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _peekTimer;
     private Point _mouseDownPosition;
@@ -36,11 +32,10 @@ public partial class MainWindow : Window
     private HwndSource? _hwndSource;
     private UsagePopup? _popup;
 
-    public MainWindow(StatusBallViewModel viewModel, SettingsService settingsService, AppSettings settings, UpdateService updateService)
+    public MainWindow(StatusBallViewModel viewModel, SettingsService settingsService, AppSettings settings)
     {
         _viewModel = viewModel;
         _settingsService = settingsService;
-        _updateService = updateService;
         _settings = settings;
         DataContext = viewModel;
         InitializeComponent();
@@ -68,7 +63,6 @@ public partial class MainWindow : Window
             PlaceAtDefaultTopRight();
         }
 
-        Root.ContextMenu = BuildContextMenu();
         Loaded += (_, _) =>
         {
             CaptureVisiblePosition();
@@ -156,94 +150,6 @@ public partial class MainWindow : Window
         base.OnMouseLeftButtonUp(e);
     }
 
-    private ContextMenu BuildContextMenu()
-    {
-        var refresh = new MenuItem { Header = "Refresh" };
-        refresh.Click += async (_, _) => await _viewModel.RefreshAsync();
-
-        var alwaysOnTop = new MenuItem { Header = "Always On Top", IsCheckable = true, IsChecked = Topmost };
-        alwaysOnTop.Click += async (_, _) =>
-        {
-            Topmost = alwaysOnTop.IsChecked;
-            _settings.AlwaysOnTop = Topmost;
-            await _settingsService.SaveAsync(_settings);
-        };
-
-        var edgeHide = new MenuItem { Header = "Edge Hide (Alt+C)", IsCheckable = true, IsChecked = _settings.EdgeHideEnabled };
-        edgeHide.Click += async (_, _) =>
-        {
-            await SetEdgeHideModeAsync(edgeHide.IsChecked);
-        };
-
-        var launchAtStartup = new MenuItem { Header = "Launch at Startup", IsCheckable = true, IsChecked = _startupService.IsEnabled() };
-        launchAtStartup.Click += (_, _) =>
-        {
-            _startupService.SetEnabled(launchAtStartup.IsChecked);
-            launchAtStartup.IsChecked = _startupService.IsEnabled();
-        };
-
-        var home = new MenuItem { Header = "Home" };
-        home.Click += (_, _) => ProjectHomeService.Open();
-
-        var upgrade = new MenuItem { Header = "Upgrade", Visibility = Visibility.Collapsed };
-        upgrade.Click += async (_, _) => await StartUpgradeAsync();
-
-        var version = new MenuItem { Header = $"Version {_updateService.CurrentVersionText}", IsEnabled = false };
-
-        var exit = new MenuItem { Header = "Exit" };
-        exit.Click += (_, _) => Application.Current.Shutdown();
-
-        void UpdateUpgradeState()
-        {
-            upgrade.Visibility = _updateService.IsUpgradeAvailable ? Visibility.Visible : Visibility.Collapsed;
-            upgrade.IsEnabled = !_updateService.IsUpgradeInProgress;
-            upgrade.Header = _updateService.LatestVersionText is null
-                ? "Upgrade"
-                : $"Upgrade to {_updateService.LatestVersionText}";
-            version.Header = $"Version {_updateService.CurrentVersionText}";
-        }
-
-        _updateService.StateChanged += (_, _) => Dispatcher.Invoke(UpdateUpgradeState);
-        UpdateUpgradeState();
-
-        var menu = new ContextMenu
-        {
-            Items =
-            {
-                refresh,
-                alwaysOnTop,
-                edgeHide,
-                launchAtStartup,
-                new Separator(),
-                home,
-                upgrade,
-                new Separator(),
-                exit,
-                new Separator(),
-                version
-            }
-        };
-        menu.Opened += (_, _) =>
-        {
-            edgeHide.IsChecked = _settings.EdgeHideEnabled;
-            launchAtStartup.IsChecked = _startupService.IsEnabled();
-        };
-        return menu;
-    }
-
-    private async Task StartUpgradeAsync()
-    {
-        try
-        {
-            await _updateService.StartUpgradeAsync();
-            Application.Current.Shutdown();
-        }
-        catch (Exception ex)
-        {
-            System.Windows.MessageBox.Show(this, ex.Message, "CodexBall Upgrade", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
     private void TogglePopup()
     {
         if (_settings.EdgeHideEnabled)
@@ -293,6 +199,17 @@ public partial class MainWindow : Window
         Hide();
     }
 
+    public bool IsAlwaysOnTopEnabled => Topmost;
+
+    public bool IsEdgeHideEnabled => _settings.EdgeHideEnabled;
+
+    public async Task SetAlwaysOnTopAsync(bool enabled)
+    {
+        Topmost = enabled;
+        _settings.AlwaysOnTop = enabled;
+        await _settingsService.SaveAsync(_settings);
+    }
+
     private void PlaceAtDefaultTopRight()
     {
         var workArea = SystemParameters.WorkArea;
@@ -301,7 +218,7 @@ public partial class MainWindow : Window
         Top = workArea.Top + 40;
     }
 
-    private async Task SetEdgeHideModeAsync(bool enabled)
+    public async Task SetEdgeHideModeAsync(bool enabled)
     {
         if (enabled)
         {
