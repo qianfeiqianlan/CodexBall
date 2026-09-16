@@ -142,6 +142,11 @@ public partial class MainWindow : Window
             CaptureVisiblePosition();
             await SavePositionAsync();
         }
+        else if (e.ClickCount > 1)
+        {
+            base.OnMouseLeftButtonUp(e);
+            return;
+        }
         else
         {
             TogglePopup();
