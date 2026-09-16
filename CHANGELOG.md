@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and this project uses semantic versioni
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-16
+
 ### Added
 
 - Added an inner status ball ring for short-window reset time remaining.
