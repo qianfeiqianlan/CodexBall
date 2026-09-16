@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using CodexBall.Core.Models;
 
@@ -71,7 +72,7 @@ public sealed class CodexUsageService : IAsyncDisposable
             {
                 name = "codex-ball",
                 title = "Codex Ball",
-                version = "0.1.0"
+                version = GetCurrentVersionText()
             },
             capabilities = new
             {
@@ -93,6 +94,17 @@ public sealed class CodexUsageService : IAsyncDisposable
         }
 
         return root.ValueKind is JsonValueKind.Object && root.EnumerateObject().Any();
+    }
+
+    private static string GetCurrentVersionText()
+    {
+        var version = typeof(CodexUsageService).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion
+            ?? "0.0.0";
+
+        var metadataIndex = version.IndexOf('+', StringComparison.Ordinal);
+        return metadataIndex >= 0 ? version[..metadataIndex] : version;
     }
 
     private void OnNotificationReceived(object? sender, JsonElement notification)

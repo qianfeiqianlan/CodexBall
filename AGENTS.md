@@ -13,6 +13,7 @@ CodexBall is a Windows-first .NET 9 WPF desktop widget for showing Codex rate-li
 ## Git
 
 - Do not proactively push commits, branches, or tags to remote repositories. The user will push remote changes manually unless they explicitly ask the agent to push.
+- Before pushing a release tag like `vX.Y.Z`, verify the local application version in `Directory.Build.props` matches the tag without the leading `v`; update it before tagging if needed.
 
 ## Architecture
 
