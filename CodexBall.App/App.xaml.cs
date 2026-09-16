@@ -33,7 +33,7 @@ public partial class App : Application
 
         var window = new MainWindow(_viewModel, settingsService, settings, updateService);
         MainWindow = window;
-        _trayIconService = new TrayIconService(_viewModel, window, updateService);
+        _trayIconService = new TrayIconService(_viewModel, updateService);
         _viewModel.CodexActivityChanged += (_, isActive) =>
         {
             if (isActive)

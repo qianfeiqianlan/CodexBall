@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Runtime.InteropServices;
-using System.Windows;
 using CodexBall.App.ViewModels;
 using DrawingFont = System.Drawing.Font;
 using DrawingFontStyle = System.Drawing.FontStyle;
@@ -15,7 +14,6 @@ namespace CodexBall.App.Services;
 public sealed class TrayIconService : IDisposable
 {
     private readonly StatusBallViewModel _viewModel;
-    private readonly Window _window;
     private readonly UpdateService _updateService;
     private readonly Icon _defaultIcon;
     private readonly WinForms.NotifyIcon _notifyIcon;
@@ -25,26 +23,15 @@ public sealed class TrayIconService : IDisposable
     private bool _disposed;
     private Icon? _dynamicIcon;
 
-    public TrayIconService(StatusBallViewModel viewModel, Window window, UpdateService updateService)
+    public TrayIconService(StatusBallViewModel viewModel, UpdateService updateService)
     {
         _viewModel = viewModel;
-        _window = window;
         _updateService = updateService;
         _defaultIcon = LoadDefaultIcon();
 
         _statusItem = new WinForms.ToolStripMenuItem("Waiting for Codex") { Enabled = false };
         var refreshItem = new WinForms.ToolStripMenuItem("Refresh");
         refreshItem.Click += async (_, _) => await _viewModel.RefreshAsync();
-
-        var showItem = new WinForms.ToolStripMenuItem("Show");
-        showItem.Click += (_, _) =>
-        {
-            if (_viewModel.IsCodexActive)
-            {
-                _window.Show();
-                _window.Activate();
-            }
-        };
 
         var homeItem = new WinForms.ToolStripMenuItem("Home");
         homeItem.Click += (_, _) => ProjectHomeService.Open();
@@ -69,7 +56,6 @@ public sealed class TrayIconService : IDisposable
             _statusItem,
             new WinForms.ToolStripSeparator(),
             refreshItem,
-            showItem,
             homeItem,
             _upgradeItem,
             new WinForms.ToolStripSeparator(),
@@ -77,14 +63,6 @@ public sealed class TrayIconService : IDisposable
             new WinForms.ToolStripSeparator(),
             _versionItem
         ]);
-        _notifyIcon.DoubleClick += (_, _) =>
-        {
-            if (_viewModel.IsCodexActive)
-            {
-                _window.Show();
-                _window.Activate();
-            }
-        };
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.CodexActivityChanged += OnCodexActivityChanged;
