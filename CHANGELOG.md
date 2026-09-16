@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project uses semantic versioni
 
 ## [Unreleased]
 
+### Added
+
+- Added an inner status ball ring for short-window reset time remaining.
+- Added click-to-toggle single-ring and dual-ring status ball modes.
+
 ### Changed
 
 - Consolidated widget actions into the system tray menu and removed the status ball context menu.

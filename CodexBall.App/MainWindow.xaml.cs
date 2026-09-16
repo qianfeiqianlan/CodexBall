@@ -13,6 +13,10 @@ namespace CodexBall.App;
 
 public partial class MainWindow : Window
 {
+    public static readonly DependencyProperty ShowResetRingProperty =
+        DependencyProperty.Register(nameof(ShowResetRing), typeof(bool), typeof(MainWindow),
+            new PropertyMetadata(false));
+
     private const int HotKeyId = 0x4342;
     private const int ModAlt = 0x0001;
     private const int VirtualKeyC = 0x43;
@@ -38,6 +42,7 @@ public partial class MainWindow : Window
         _settings = settings;
         DataContext = viewModel;
         InitializeComponent();
+        ShowResetRing = settings.ShowResetRing;
 
         _peekTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _peekTimer.Tick += (_, _) =>
@@ -145,6 +150,10 @@ public partial class MainWindow : Window
         {
             _peekTimer.Start();
         }
+        else
+        {
+            await ToggleRingModeAsync();
+        }
 
         base.OnMouseLeftButtonUp(e);
     }
@@ -167,11 +176,24 @@ public partial class MainWindow : Window
 
     public bool IsEdgeHideEnabled => _settings.EdgeHideEnabled;
 
+    public bool ShowResetRing
+    {
+        get => (bool)GetValue(ShowResetRingProperty);
+        set => SetValue(ShowResetRingProperty, value);
+    }
+
     public async Task SetAlwaysOnTopAsync(bool enabled)
     {
         Topmost = enabled;
         _settings.AlwaysOnTop = enabled;
         await _settingsService.SaveAsync(_settings);
+    }
+
+    private async Task ToggleRingModeAsync()
+    {
+        ShowResetRing = !ShowResetRing;
+        _settings.ShowResetRing = ShowResetRing;
+        await SavePositionAsync();
     }
 
     private void PlaceAtDefaultTopRight()

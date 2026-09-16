@@ -10,5 +10,7 @@ public sealed class AppSettings
 
     public bool EdgeHideEnabled { get; set; }
 
+    public bool ShowResetRing { get; set; }
+
     public double Opacity { get; set; } = 1.0;
 }

@@ -19,6 +19,18 @@ public sealed class ProgressRing : FrameworkElement
         DependencyProperty.Register(nameof(RingBrush), typeof(Brush), typeof(ProgressRing),
             new FrameworkPropertyMetadata(Brushes.LimeGreen, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty ResetProgressProperty =
+        DependencyProperty.Register(nameof(ResetProgress), typeof(double), typeof(ProgressRing),
+            new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty ResetRingBrushProperty =
+        DependencyProperty.Register(nameof(ResetRingBrush), typeof(Brush), typeof(ProgressRing),
+            new FrameworkPropertyMetadata(Brushes.DeepSkyBlue, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty ShowResetRingProperty =
+        DependencyProperty.Register(nameof(ShowResetRing), typeof(bool), typeof(ProgressRing),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public double Progress
     {
         get => (double)GetValue(ProgressProperty);
@@ -29,6 +41,24 @@ public sealed class ProgressRing : FrameworkElement
     {
         get => (Brush)GetValue(RingBrushProperty);
         set => SetValue(RingBrushProperty, value);
+    }
+
+    public double ResetProgress
+    {
+        get => (double)GetValue(ResetProgressProperty);
+        set => SetValue(ResetProgressProperty, value);
+    }
+
+    public Brush ResetRingBrush
+    {
+        get => (Brush)GetValue(ResetRingBrushProperty);
+        set => SetValue(ResetRingBrushProperty, value);
+    }
+
+    public bool ShowResetRing
+    {
+        get => (bool)GetValue(ShowResetRingProperty);
+        set => SetValue(ShowResetRingProperty, value);
     }
 
     protected override void OnRender(DrawingContext drawingContext)
@@ -42,21 +72,34 @@ public sealed class ProgressRing : FrameworkElement
         }
 
         var center = new Point(ActualWidth / 2, ActualHeight / 2);
-        var radius = size / 2 - 4;
-        var trackPen = new Pen(new SolidColorBrush(Color.FromArgb(70, 255, 255, 255)), 5)
+        drawingContext.DrawEllipse(new SolidColorBrush(Color.FromArgb(220, 22, 26, 32)), null, center, size / 2 - 4, size / 2 - 4);
+        DrawRing(drawingContext, center, size / 2 - 4, 5, Progress, RingBrush, Color.FromArgb(70, 255, 255, 255), SweepDirection.Clockwise);
+        if (ShowResetRing)
         {
-            StartLineCap = PenLineCap.Round,
-            EndLineCap = PenLineCap.Round
-        };
-        var valuePen = new Pen(RingBrush, 5)
+            DrawRing(drawingContext, center, size / 2 - 11, 3, ResetProgress, ResetRingBrush, Color.FromArgb(42, 255, 255, 255), SweepDirection.Counterclockwise);
+        }
+    }
+
+    private static void DrawRing(
+        DrawingContext drawingContext,
+        Point center,
+        double radius,
+        double thickness,
+        double progressValue,
+        Brush valueBrush,
+        Color trackColor,
+        SweepDirection sweepDirection)
+    {
+        if (radius <= 0)
         {
-            StartLineCap = PenLineCap.Round,
-            EndLineCap = PenLineCap.Round
-        };
+            return;
+        }
 
-        drawingContext.DrawEllipse(new SolidColorBrush(Color.FromArgb(220, 22, 26, 32)), trackPen, center, radius, radius);
+        var trackPen = CreatePen(new SolidColorBrush(trackColor), thickness);
+        var valuePen = CreatePen(valueBrush, thickness);
+        drawingContext.DrawEllipse(null, trackPen, center, radius, radius);
 
-        var progress = Math.Clamp(Progress, 0, 100);
+        var progress = Math.Clamp(progressValue, 0, 100);
         if (progress <= 0)
         {
             return;
@@ -69,7 +112,10 @@ public sealed class ProgressRing : FrameworkElement
         }
 
         var startAngle = -90d;
-        var endAngle = startAngle + 360d * progress / 100d;
+        var sweep = 360d * progress / 100d;
+        var endAngle = sweepDirection == SweepDirection.Clockwise
+            ? startAngle + sweep
+            : startAngle - sweep;
         var start = PointOnCircle(center, radius, startAngle);
         var end = PointOnCircle(center, radius, endAngle);
         var isLargeArc = progress > 50;
@@ -78,12 +124,19 @@ public sealed class ProgressRing : FrameworkElement
         using (var context = geometry.Open())
         {
             context.BeginFigure(start, isFilled: false, isClosed: false);
-            context.ArcTo(end, new Size(radius, radius), 0, isLargeArc, SweepDirection.Clockwise, isStroked: true, isSmoothJoin: true);
+            context.ArcTo(end, new Size(radius, radius), 0, isLargeArc, sweepDirection, isStroked: true, isSmoothJoin: true);
         }
 
         geometry.Freeze();
         drawingContext.DrawGeometry(null, valuePen, geometry);
     }
+
+    private static Pen CreatePen(Brush brush, double thickness)
+        => new(brush, thickness)
+        {
+            StartLineCap = PenLineCap.Round,
+            EndLineCap = PenLineCap.Round
+        };
 
     private static Point PointOnCircle(Point center, double radius, double angleDegrees)
     {

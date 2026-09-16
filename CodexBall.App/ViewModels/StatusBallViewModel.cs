@@ -57,6 +57,8 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public double Progress => _snapshot.ShortWindow?.RemainingPercent ?? 0;
 
+    public double ResetProgress => CalculateResetProgress(_snapshot.ShortWindow);
+
     public string StatusText => _snapshot.AccountState switch
     {
         AccountState.Available => "Codex",
@@ -72,6 +74,10 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
         >= 20 => new SolidColorBrush(Color.FromRgb(245, 187, 64)),
         _ => new SolidColorBrush(Color.FromRgb(246, 91, 91))
     };
+
+    public Brush ResetRingBrush => _snapshot.ShortWindow?.ResetsAt is null
+        ? new SolidColorBrush(Color.FromRgb(130, 140, 150))
+        : new SolidColorBrush(Color.FromRgb(75, 179, 255));
 
     public string TooltipText => RateLimitFormatter.FormatTooltip(_snapshot);
 
@@ -146,8 +152,10 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
         OnPropertyChanged(nameof(CenterText));
         OnPropertyChanged(nameof(TrayUsagePercent));
         OnPropertyChanged(nameof(Progress));
+        OnPropertyChanged(nameof(ResetProgress));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(RingBrush));
+        OnPropertyChanged(nameof(ResetRingBrush));
         OnPropertyChanged(nameof(TooltipText));
         OnPropertyChanged(nameof(ShortWindowLabel));
         OnPropertyChanged(nameof(ShortWindowPercent));
@@ -174,6 +182,18 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
         OnPropertyChanged(nameof(IsCodexActive));
         OnPropertyChanged(nameof(TrayUsagePercent));
         CodexActivityChanged?.Invoke(this, isActive);
+    }
+
+    private static double CalculateResetProgress(RateLimitWindow? window)
+    {
+        if (window?.ResetsAt is null || window.WindowDurationMins <= 0)
+        {
+            return 0;
+        }
+
+        var remaining = window.ResetsAt.Value - DateTimeOffset.Now;
+        var total = TimeSpan.FromMinutes(window.WindowDurationMins);
+        return Math.Clamp(remaining.TotalMilliseconds / total.TotalMilliseconds * 100, 0, 100);
     }
 
     public async ValueTask DisposeAsync()

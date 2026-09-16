@@ -20,6 +20,9 @@
           ToolTip="{Binding TooltipText}">
         <controls:ProgressRing Progress="{Binding Progress}"
                                RingBrush="{Binding RingBrush}"
+                               ResetProgress="{Binding ResetProgress}"
+                               ResetRingBrush="{Binding ResetRingBrush}"
+                               ShowResetRing="{Binding ShowResetRing, RelativeSource={RelativeSource AncestorType=Window}}"
                                Width="64"
                                Height="64" />
         <TextBlock Text="{Binding CenterText}"

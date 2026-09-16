@@ -13,6 +13,7 @@ It runs as a small 64 x 64 WPF floating ball, can hide near the screen edge, and
 ## Features
 
 - Floating always-on-top status ball.
+- Click-to-toggle single-ring and dual-ring status ball modes.
 - System tray icon with refresh, display toggles, launch-at-startup, upgrade, and exit actions.
 - Optional launch-at-startup toggle.
 - Edge-hide behavior for a lightweight desktop presence.
