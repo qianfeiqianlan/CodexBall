@@ -17,6 +17,7 @@ public sealed class TrayIconService : IDisposable
     private readonly MainWindow _window;
     private readonly UpdateService _updateService;
     private readonly StartupService _startupService = new();
+    private readonly bool _isPackaged = AppPackageService.IsPackaged();
     private readonly Icon _defaultIcon;
     private readonly WinForms.NotifyIcon _notifyIcon;
     private readonly WinForms.ToolStripMenuItem _statusItem;
@@ -46,6 +47,7 @@ public sealed class TrayIconService : IDisposable
         _edgeHideItem.Click += async (_, _) => await _window.SetEdgeHideModeAsync(_edgeHideItem.Checked);
 
         _launchAtStartupItem = new WinForms.ToolStripMenuItem("Launch at Startup") { CheckOnClick = true };
+        _launchAtStartupItem.Visible = !_isPackaged;
         _launchAtStartupItem.Click += (_, _) =>
         {
             _startupService.SetEnabled(_launchAtStartupItem.Checked);
@@ -115,7 +117,7 @@ public sealed class TrayIconService : IDisposable
 
     private void UpdateUpgradeState()
     {
-        _upgradeItem.Visible = _updateService.IsUpgradeAvailable;
+        _upgradeItem.Visible = !_isPackaged && _updateService.IsUpgradeAvailable;
         _upgradeItem.Enabled = !_updateService.IsUpgradeInProgress;
         _upgradeItem.Text = _updateService.LatestVersionText is null
             ? "Upgrade"
@@ -127,7 +129,10 @@ public sealed class TrayIconService : IDisposable
     {
         _alwaysOnTopItem.Checked = _window.IsAlwaysOnTopEnabled;
         _edgeHideItem.Checked = _window.IsEdgeHideEnabled;
-        _launchAtStartupItem.Checked = _startupService.IsEnabled();
+        if (!_isPackaged)
+        {
+            _launchAtStartupItem.Checked = _startupService.IsEnabled();
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

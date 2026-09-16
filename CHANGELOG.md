@@ -6,6 +6,15 @@ The format is based on Keep a Changelog, and this project uses semantic versioni
 
 ## [Unreleased]
 
+### Added
+
+- Added MSIX packaging project assets for local packaged app testing.
+
+### Changed
+
+- Hide launch-at-startup and self-upgrade actions when running as a packaged app.
+- Skip GitHub update checks when running as a packaged app.
+
 ## [0.2.2] - 2026-09-16
 
 ### Added

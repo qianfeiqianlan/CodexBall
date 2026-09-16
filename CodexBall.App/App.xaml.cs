@@ -46,7 +46,11 @@ public partial class App : Application
             }
         };
 
-        _ = updateService.CheckForUpdatesAsync();
+        if (!AppPackageService.IsPackaged())
+        {
+            _ = updateService.CheckForUpdatesAsync();
+        }
+
         await _viewModel.StartAsync();
     }
 

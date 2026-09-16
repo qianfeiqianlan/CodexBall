@@ -27,6 +27,15 @@ artifacts/
 *.msix
 *.msixbundle
 *.appinstaller
+*.appx
+*.appxbundle
+*.appxsym
+*.pfx
+*.assets.cache
+
+# MSIX packaging local output
+CodexBall.Package/AppPackages/
+CodexBall.Package/BundleArtifacts/
 
 # Local runtime config/state
 .env
