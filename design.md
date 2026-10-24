@@ -1,5 +1,19 @@
 # 64px Codex 状态球——产品与技术设计文档
 
+> 本文主体保留最初 V0.1 设计与后续路线图，包含历史提案，不应直接作为当前实现清单。当前行为以本文“实现现状”、[README](README.md) 和 [桌面搭档需求基线](docs/desktop-companion-requirements.md) 为准。
+
+## 实现现状（2026-10-24）
+
+- Windows x64 / .NET 9 / WPF。统一托盘“外观”入口：CodexBall 圆环、小春、春翔、Mao、Mark；缺失模型不显示。Haru 已移除。
+- 圆环 64 × 64 DIP，点击切换单/双环；内环表示短窗口重置剩余时间，并非长期额度。选择角色自动进入桌宠，画布 240 × 260 或 240 × 320 DIP，另加 20 DIP 页脚。
+- 桌宠使用真实 Live2D 离屏渲染，支持呼吸/眨眼、视线跟随、点击动作和拖动回弹。下方仅细进度条，点击打开用量详情。
+- 仅托盘右键菜单；无角色右键菜单、专注模式、外观重载、打开文件夹或用户目录扫描。PNG 播放器保留内部兼容。
+- Alt+H 切换贴边隐藏，Alt+C 顺序切换外观。隐藏方向以窗口到工作区四边的百分比距离决定，恢复原可见位置，保留悬停唤出条。
+- 中文/English 即时切换并持久化，默认跟随启动时系统 UI 语言（中文系列为中文，其他为英文）。
+- Codex 关闭时桌宠仍可显示，小球随 Codex 活动显示；隐藏暂停动画，切回圆环释放播放器。
+- Core 保留协议隔离。当前兜底轮询为每分钟一次，通知触发 500 ms 防抖刷新；本地重置文字每分钟更新。
+- 运行时和模型准备、GPU 测试与局限见 [Live2D 技术验证](docs/live2d-technical-preview.md)。原创正式 Q 版模型、自由分层换装和分析图表尚未完成。
+
 > Working Name：CodexBall
 > Version：0.1
 > Platform：Windows
@@ -126,105 +140,16 @@ remainingPercent = 72
 
 ---
 
-# 5. 用户交互
+# 5. 用户交互（当前）
 
-## 默认
-
-状态球：
-
-```text
-64 × 64
-TopMost
-不显示任务栏图标
-透明背景
-无窗口边框
-```
-
-## Hover
-
-显示简短 Tooltip：
-
-```text
-Codex
-
-5h       72% remaining
-Weekly   43% remaining
-
-5h resets in 2h 18m
-```
-
-窗口名称不要在代码层硬编码成 `5h / Weekly`，应根据 `windowDurationMins` 格式化。
-
-例如：
-
-```text
-300     → 5h
-1440    → 24h
-10080   → 7d
-```
-
-Codex 当前协议的额度窗口提供 `usedPercent`、`windowDurationMins` 和 `resetsAt`。
-
-## 单击
-
-展开 Usage Popup：
-
-```text
-┌─────────────────────────────┐
-│ Codex                       │
-│                             │
-│ 5 hour                      │
-│ ███████░░░      72% left    │
-│ Reset in 2h 18m             │
-│                             │
-│ 7 day                       │
-│ █████░░░░░      43% left    │
-│ Reset Sep 18 14:35          │
-│                             │
-│ Last update 17:02           │
-└─────────────────────────────┘
-```
-
-## 拖动
-
-用户可拖动状态球。
-
-需要区分：
-
-```text
-Mouse Down
-    ↓
-移动距离 < 4 DIP
-    ↓
-Click
-
-Mouse Down
-    ↓
-移动距离 >= 4 DIP
-    ↓
-Drag
-```
-
-避免拖动时意外弹出详情窗口。
-
-## 右键
-
-MVP：
-
-```text
-Refresh
-Always On Top ✓
-Exit
-```
-
-后续增加：
-
-```text
-Start with Windows
-Opacity
-Settings
-About
-```
+- 悬停：显示当前额度窗口、剩余百分比与重置时间；窗口名称由实际 `windowDurationMins` 格式化，并随语言切换。
+- 单击小球：切换单环和双环，内环表示短窗口重置进度。
+- 单击桌宠头部：请求模型点击动作；拖动与点击互斥。
+- 单击桌宠下方细进度条：打开用量详情，包含短/长期额度、重置和更新时间。
+- 拖动：移动窗口；桌宠附带程序化摇摆和松手回弹。
+- 右键：只有系统托盘菜单，提供刷新、外观、语言、贴边隐藏、置顶、开机启动、主页、升级与退出。打包应用隐藏开机启动与自升级入口。
+- Alt+H：按四边归一化距离切换贴边隐藏；悬停窄条可恢复原位置。
+- Alt+C：按外观菜单顺序循环并回绕；选角色自动进入桌宠，选 CodexBall 返回圆环。
 
 ---
 
@@ -941,7 +866,7 @@ Notification
 
 Fallback Poll
    ↓
-每 5 分钟 Fetch
+每 1 分钟 Fetch
 
 Right Click → Refresh
    ↓
@@ -950,7 +875,7 @@ Right Click → Refresh
 
 这样主要依靠事件更新，同时避免 App Server Notification 异常时状态永久过期。
 
-Codex 自己当前的状态实现将超过 15 分钟的 snapshot 视为 stale，因此 5 分钟 fallback 是一个较保守的客户端策略。
+当前实现每分钟轮询，并在本地每分钟更新重置时间文字。
 
 ---
 
@@ -1130,16 +1055,23 @@ CodexBall/
     └── app.log
 ```
 
-settings.json：
+settings.json（当前字段名和默认值，位置可为空）：
 
 ```json
 {
-  "left": 1720,
-  "top": 920,
-  "alwaysOnTop": true,
-  "opacity": 1.0
+  "Language": "system",
+  "Left": null,
+  "Top": null,
+  "AlwaysOnTop": true,
+  "EdgeHideEnabled": false,
+  "ShowResetRing": false,
+  "Opacity": 1.0,
+  "CompanionMode": false,
+  "SkinId": "codexball"
 }
 ```
+
+`Language` 支持 `system`、`zh-CN`、`en-US`；缺少字段使用默认值。`CompanionMode` 是内部持久化状态，用户通过“外观”统一切换。旧 `FocusMode` 字段被忽略。当前没有实现本节早期设想的日志目录。
 
 MVP 不需要数据库。
 
@@ -1417,8 +1349,8 @@ Double Ring
 例如：
 
 ```text
-内环 = Short Window
-外环 = Long Window
+内环 = Short Window Reset Time Remaining
+外环 = Short Window Remaining
 中心 = Short Remaining
 ```
 

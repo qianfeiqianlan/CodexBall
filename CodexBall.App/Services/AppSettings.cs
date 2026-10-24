@@ -2,6 +2,8 @@ namespace CodexBall.App.Services;
 
 public sealed class AppSettings
 {
+    public string Language { get; set; } = "system";
+
     public double? Left { get; set; }
 
     public double? Top { get; set; }
@@ -13,4 +15,8 @@ public sealed class AppSettings
     public bool ShowResetRing { get; set; }
 
     public double Opacity { get; set; } = 1.0;
+
+    public bool CompanionMode { get; set; }
+
+    public string SkinId { get; set; } = "codexball";
 }

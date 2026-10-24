@@ -23,6 +23,11 @@ Thumbs.db
 # Publish output
 publish/
 artifacts/
+CodexBall.App/Live2D/Live2DCubismCore.dll
+CodexBall.App/Skins/live2d-haru/model/
+CodexBall.App/Skins/local-*/model/
+CodexBall.App/Skins/local-*/Source-ReadMe.txt
+CodexBall.App/Live2D/Licenses/
 *.zip
 *.msix
 *.msixbundle
@@ -32,6 +37,7 @@ artifacts/
 *.appxsym
 *.pfx
 *.assets.cache
+tmp
 
 # MSIX packaging local output
 CodexBall.Package/AppPackages/

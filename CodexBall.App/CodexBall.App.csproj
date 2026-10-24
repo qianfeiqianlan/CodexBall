@@ -13,10 +13,24 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\CodexBall.ico</ApplicationIcon>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Live2DCSharpSDK.OpenGL" Version="1.0.0" />
+    <PackageReference Include="OpenTK" Version="4.9.4" />
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
     <Resource Include="Assets\CodexBall.ico" />
+    <Content Include="Skins\**\*" Exclude="Skins\live2d-haru\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Live2D\Live2DCubismCore.dll" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" Link="Live2DCubismCore.dll" Condition="Exists('Live2D\Live2DCubismCore.dll')" />
+    <Content Include="Live2D\Licenses\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <Target Name="CheckLive2DAssets" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('Live2D\Live2DCubismCore.dll')"
+           Text="Live2D dependencies are missing. Run: powershell -ExecutionPolicy Bypass -File scripts/Setup-Live2D.ps1 (from the repository root)." />
+  </Target>
 
 </Project>

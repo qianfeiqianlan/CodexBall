@@ -11,6 +11,15 @@ namespace CodexBall.App.Controls;
 
 public sealed class ProgressRing : FrameworkElement
 {
+    public static readonly DependencyProperty FillBrushProperty =
+        DependencyProperty.Register(nameof(FillBrush), typeof(Brush), typeof(ProgressRing),
+            new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromArgb(220, 22, 26, 32)), FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public Brush FillBrush
+    {
+        get => (Brush)GetValue(FillBrushProperty);
+        set => SetValue(FillBrushProperty, value);
+    }
     public static readonly DependencyProperty ProgressProperty =
         DependencyProperty.Register(nameof(Progress), typeof(double), typeof(ProgressRing),
             new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -72,7 +81,7 @@ public sealed class ProgressRing : FrameworkElement
         }
 
         var center = new Point(ActualWidth / 2, ActualHeight / 2);
-        drawingContext.DrawEllipse(new SolidColorBrush(Color.FromArgb(220, 22, 26, 32)), null, center, size / 2 - 4, size / 2 - 4);
+        drawingContext.DrawEllipse(FillBrush, null, center, size / 2 - 4, size / 2 - 4);
         DrawRing(drawingContext, center, size / 2 - 4, 5, Progress, RingBrush, Color.FromArgb(70, 255, 255, 255), SweepDirection.Clockwise);
         if (ShowResetRing)
         {

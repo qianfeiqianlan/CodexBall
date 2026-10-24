@@ -24,8 +24,12 @@ jobs:
       - name: Restore
         run: dotnet restore
 
+      - name: Prepare Live2D assets and license notices
+        shell: pwsh
+        run: ./scripts/Setup-Live2D.ps1
+
       - name: Test
-        run: dotnet test --configuration Release --no-restore
+        run: dotnet test --configuration Release --no-restore --filter "Category!=Live2DGraphics"
 
       - name: Get version
         id: get_version

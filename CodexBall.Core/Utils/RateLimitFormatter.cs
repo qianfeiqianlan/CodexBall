@@ -4,8 +4,15 @@ namespace CodexBall.Core.Utils;
 
 public static class RateLimitFormatter
 {
-    public static string FormatWindowLabel(int windowDurationMins)
+    public static string FormatWindowLabel(int windowDurationMins, bool chinese = false)
     {
+        if (chinese)
+        {
+            if (windowDurationMins <= 0) return "未知";
+            if (windowDurationMins % 1440 == 0) return $"{windowDurationMins / 1440}天";
+            if (windowDurationMins % 60 == 0) return $"{windowDurationMins / 60}小时";
+            return $"{windowDurationMins}分钟";
+        }
         if (windowDurationMins <= 0)
         {
             return "Unknown";

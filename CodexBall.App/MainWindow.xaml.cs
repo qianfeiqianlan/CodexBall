@@ -6,6 +6,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using CodexBall.App.Services;
 using CodexBall.App.ViewModels;
+using CodexBall.Core.Utils;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
 
@@ -17,9 +18,12 @@ public partial class MainWindow : Window
         DependencyProperty.Register(nameof(ShowResetRing), typeof(bool), typeof(MainWindow),
             new PropertyMetadata(false));
 
-    private const int HotKeyId = 0x4342;
+    private const int HideHotKeyId = 0x4342;
+    private const int AppearanceHotKeyId = 0x4343;
     private const int ModAlt = 0x0001;
+    private const int ModNoRepeat = 0x4000;
     private const int VirtualKeyC = 0x43;
+    private const int VirtualKeyH = 0x48;
     private const int WmHotKey = 0x0312;
     private const double VisibleStrip = 6;
 
@@ -29,10 +33,15 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _peekTimer;
     private Point _mouseDownPosition;
     private bool _isDragging;
+    private bool _dragGesture;
+    private double _dragPreviousLeft;
+    private bool _manualDrag;
     private bool _isHiddenAtEdge;
     private bool _isPeeking;
     private double _visibleLeft;
     private double _visibleTop;
+    private double _hiddenLeft;
+    private double _hiddenTop;
     private HwndSource? _hwndSource;
 
     public MainWindow(StatusBallViewModel viewModel, SettingsService settingsService, AppSettings settings)
@@ -69,6 +78,7 @@ public partial class MainWindow : Window
 
         Loaded += (_, _) =>
         {
+            ClampToWorkArea();
             CaptureVisiblePosition();
             if (_settings.EdgeHideEnabled)
             {
@@ -76,6 +86,7 @@ public partial class MainWindow : Window
             }
         };
         MouseEnter += (_, _) => PeekFromEdge();
+        InitializeCompanion();
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -83,16 +94,23 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         _hwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
         _hwndSource?.AddHook(WndProc);
-        RegisterHotKey(new WindowInteropHelper(this).Handle, HotKeyId, ModAlt, VirtualKeyC);
+        var handle = new WindowInteropHelper(this).Handle;
+        RegisterHotKey(handle, HideHotKeyId, ModAlt | ModNoRepeat, VirtualKeyH);
+        RegisterHotKey(handle, AppearanceHotKeyId, ModAlt | ModNoRepeat, VirtualKeyC);
     }
 
     protected override async void OnClosed(EventArgs e)
     {
         _peekTimer.Stop();
+        _sleepTimer.Stop();
+        _player?.Dispose();
+        _viewModel.CompanionReaction -= OnCompanionReaction;
+        Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         if (_hwndSource is not null)
         {
             _hwndSource.RemoveHook(WndProc);
-            UnregisterHotKey(_hwndSource.Handle, HotKeyId);
+            UnregisterHotKey(_hwndSource.Handle, HideHotKeyId);
+            UnregisterHotKey(_hwndSource.Handle, AppearanceHotKeyId);
         }
 
         await SavePositionAsync();
@@ -101,6 +119,11 @@ public partial class MainWindow : Window
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
+        if (UsagePopup.IsOpen && UsagePopup.Child is FrameworkElement panel && panel.IsMouseOver)
+        {
+            base.OnMouseLeftButtonDown(e);
+            return;
+        }
         if (_settings.EdgeHideEnabled)
         {
             PeekFromEdge();
@@ -109,12 +132,27 @@ public partial class MainWindow : Window
         _peekTimer.Stop();
         _mouseDownPosition = e.GetPosition(this);
         _isDragging = false;
+        _dragGesture = false;
+        RecordInteraction();
+        var barPoint = e.GetPosition(UsageBar);
+        _usageBarClick = IsCompanionMode && barPoint.X >= 0 && barPoint.Y >= 0
+            && barPoint.X <= UsageBar.ActualWidth && barPoint.Y <= UsageBar.ActualHeight;
+        var head = _skin?.Definition.Head;
+        var characterPoint = e.GetPosition(CharacterCanvas);
+        _headClick = IsCompanionMode && head is not null && characterPoint.X >= head.X
+            && characterPoint.X <= head.X + head.Width && characterPoint.Y >= head.Y
+            && characterPoint.Y <= head.Y + head.Height;
         CaptureMouse();
         base.OnMouseLeftButtonDown(e);
     }
 
-    protected override void OnMouseMove(MouseEventArgs e)
+    protected override async void OnMouseMove(MouseEventArgs e)
     {
+        if (IsCompanionMode && _player is Companion.IInteractiveCompanionPlayer interactive)
+        {
+            var pointer = e.GetPosition(CharacterCanvas);
+            interactive.SetLookTarget((pointer.X / CharacterCanvas.Width - .5) * 2, (.5 - pointer.Y / CharacterCanvas.Height) * 2);
+        }
         if (e.LeftButton != MouseButtonState.Pressed || !IsMouseCaptured)
         {
             base.OnMouseMove(e);
@@ -122,13 +160,41 @@ public partial class MainWindow : Window
         }
 
         var current = e.GetPosition(this);
-        if (!_isDragging && (Math.Abs(current.X - _mouseDownPosition.X) >= 4 || Math.Abs(current.Y - _mouseDownPosition.Y) >= 4))
+        if (_manualDrag)
+        {
+            Left += current.X - _mouseDownPosition.X;
+            Top += current.Y - _mouseDownPosition.Y;
+            return;
+        }
+        if (!_isDragging && (Math.Abs(current.X - _mouseDownPosition.X) >= SystemParameters.MinimumHorizontalDragDistance
+            || Math.Abs(current.Y - _mouseDownPosition.Y) >= SystemParameters.MinimumVerticalDragDistance))
         {
             _isDragging = true;
+            _dragGesture = true;
             _settings.EdgeHideEnabled = false;
             ShowVisible(animate: false);
+            UsagePopup.IsOpen = false;
+            PlayAction(CodexBall.Core.Companion.CompanionAction.Drag);
+            if (_player is Companion.IInteractiveCompanionPlayer && IsCompanionMode)
+            {
+                // Keep the WPF dispatcher/render loop active while dragging a live model.
+                _manualDrag = true;
+                Left += current.X - _mouseDownPosition.X;
+                Top += current.Y - _mouseDownPosition.Y;
+                return;
+            }
             ReleaseMouseCapture();
-            DragMove();
+            try { DragMove(); }
+            catch (InvalidOperationException) { /* Button can be released before the native drag starts. */ }
+            finally
+            {
+                _isDragging = false;
+                ClampToWorkArea();
+                CaptureVisiblePosition();
+                PlayAction(CodexBall.Core.Companion.CompanionAction.Drop, force: true);
+                RecordInteraction();
+                await SavePositionAsync();
+            }
         }
 
         base.OnMouseMove(e);
@@ -136,26 +202,56 @@ public partial class MainWindow : Window
 
     protected override async void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
-        if (IsMouseCaptured)
+        if (_manualDrag)
+        {
+            await FinishManualDragAsync();
+            base.OnMouseLeftButtonUp(e);
+            return;
+        }
+        var hadCapture = IsMouseCaptured;
+        if (hadCapture)
         {
             ReleaseMouseCapture();
         }
 
-        if (_isDragging)
+        if (_dragGesture || !hadCapture)
         {
-            CaptureVisiblePosition();
-            await SavePositionAsync();
+            // DragMove finishes and saves in OnMouseMove; never turn its release into a click.
         }
-        else if (_settings.EdgeHideEnabled && _isPeeking)
+        else if (_settings.EdgeHideEnabled && _isPeeking && !IsCompanionMode)
         {
             _peekTimer.Start();
         }
         else
         {
-            await ToggleRingModeAsync();
+            if (IsCompanionMode)
+            {
+                if (_usageBarClick) UsagePopup.IsOpen = !UsagePopup.IsOpen;
+                else if (_headClick) PlayAction(CodexBall.Core.Companion.CompanionAction.Pat);
+            }
+            else await ToggleRingModeAsync();
         }
 
         base.OnMouseLeftButtonUp(e);
+        if (_isPeeking) _peekTimer.Start();
+    }
+
+    protected override async void OnLostMouseCapture(MouseEventArgs e)
+    {
+        if (_manualDrag) await FinishManualDragAsync();
+        base.OnLostMouseCapture(e);
+    }
+
+    private async Task FinishManualDragAsync()
+    {
+        _manualDrag = false;
+        _isDragging = false;
+        if (IsMouseCaptured) ReleaseMouseCapture();
+        ClampToWorkArea();
+        CaptureVisiblePosition();
+        PlayAction(CodexBall.Core.Companion.CompanionAction.Drop, force: true);
+        RecordInteraction();
+        await SavePositionAsync();
     }
 
     public void ShowForCodex()
@@ -164,10 +260,12 @@ public partial class MainWindow : Window
         {
             Show();
         }
+        UpdatePlayback();
     }
 
     public void HideForCodex()
     {
+        if (IsCompanionMode) return;
         _peekTimer.Stop();
         Hide();
     }
@@ -180,6 +278,15 @@ public partial class MainWindow : Window
     {
         get => (bool)GetValue(ShowResetRingProperty);
         set => SetValue(ShowResetRingProperty, value);
+    }
+
+    public string LanguagePreference => _settings.Language;
+
+    public async Task SetLanguageAsync(string language)
+    {
+        AppLocalization.Current.Apply(language);
+        _settings.Language = AppLocalization.Current.Preference;
+        await SavePositionAsync();
     }
 
     public async Task SetAlwaysOnTopAsync(bool enabled)
@@ -222,14 +329,32 @@ public partial class MainWindow : Window
 
     private void EnterEdgeHideMode(bool animate)
     {
-        var workArea = SystemParameters.WorkArea;
+        var workArea = CurrentWorkArea();
         if (!_isHiddenAtEdge && !_isPeeking)
         {
             CaptureVisiblePosition();
         }
 
-        _visibleLeft = workArea.Right - Width;
-        _visibleTop = Clamp(_visibleTop, workArea.Top, workArea.Bottom - Height);
+        var placement = EdgeHideGeometry.Calculate(_visibleLeft, _visibleTop, Width, Height,
+            workArea.Left, workArea.Top, workArea.Width, workArea.Height, VisibleStrip);
+        _visibleLeft = placement.VisibleLeft;
+        _visibleTop = placement.VisibleTop;
+        _hiddenLeft = placement.HiddenLeft;
+        _hiddenTop = placement.HiddenTop;
+        EdgeRevealHandle.Width = placement.Edge is HideEdge.Left or HideEdge.Right ? VisibleStrip : double.NaN;
+        EdgeRevealHandle.Height = placement.Edge is HideEdge.Top or HideEdge.Bottom ? VisibleStrip : double.NaN;
+        EdgeRevealHandle.HorizontalAlignment = placement.Edge switch
+        {
+            HideEdge.Left => System.Windows.HorizontalAlignment.Right,
+            HideEdge.Right => System.Windows.HorizontalAlignment.Left,
+            _ => System.Windows.HorizontalAlignment.Stretch
+        };
+        EdgeRevealHandle.VerticalAlignment = placement.Edge switch
+        {
+            HideEdge.Top => VerticalAlignment.Bottom,
+            HideEdge.Bottom => VerticalAlignment.Top,
+            _ => VerticalAlignment.Stretch
+        };
         SlideToHidden(animate);
     }
 
@@ -250,6 +375,8 @@ public partial class MainWindow : Window
         _peekTimer.Stop();
         _isPeeking = true;
         _isHiddenAtEdge = false;
+        EdgeRevealHandle.Visibility = Visibility.Collapsed;
+        UpdatePlayback();
         AnimateWindowTo(_visibleLeft, _visibleTop, TimeSpan.FromMilliseconds(420), () =>
         {
             if (_settings.EdgeHideEnabled)
@@ -261,20 +388,21 @@ public partial class MainWindow : Window
 
     private void SlideToHidden(bool animate = true)
     {
-        var hiddenLeft = SystemParameters.WorkArea.Right - VisibleStrip;
         _isPeeking = false;
         _isHiddenAtEdge = true;
+        EdgeRevealHandle.Visibility = Visibility.Visible;
+        UpdatePlayback();
 
         if (animate)
         {
-            AnimateWindowTo(hiddenLeft, _visibleTop, TimeSpan.FromMilliseconds(420));
+            AnimateWindowTo(_hiddenLeft, _hiddenTop, TimeSpan.FromMilliseconds(420));
         }
         else
         {
             BeginAnimation(LeftProperty, null);
             BeginAnimation(TopProperty, null);
-            Left = hiddenLeft;
-            Top = _visibleTop;
+            Left = _hiddenLeft;
+            Top = _hiddenTop;
         }
     }
 
@@ -283,6 +411,8 @@ public partial class MainWindow : Window
         _peekTimer.Stop();
         _isPeeking = false;
         _isHiddenAtEdge = false;
+        EdgeRevealHandle.Visibility = Visibility.Collapsed;
+        UpdatePlayback();
 
         if (animate)
         {
@@ -328,17 +458,24 @@ public partial class MainWindow : Window
 
     private IntPtr WndProc(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (message == WmHotKey && wParam.ToInt32() == HotKeyId)
+        if (message == 0x0021) // WM_MOUSEACTIVATE: deliver clicks without stealing keyboard focus.
+        {
+            handled = true;
+            return new IntPtr(3); // MA_NOACTIVATE
+        }
+        if (message == WmHotKey && wParam.ToInt32() == HideHotKeyId)
         {
             _ = SetEdgeHideModeAsync(!_settings.EdgeHideEnabled);
+            handled = true;
+        }
+        else if (message == WmHotKey && wParam.ToInt32() == AppearanceHotKeyId)
+        {
+            _ = CycleAppearanceAsync();
             handled = true;
         }
 
         return IntPtr.Zero;
     }
-
-    private static double Clamp(double value, double minimum, double maximum)
-        => Math.Min(Math.Max(value, minimum), maximum);
 
     private async Task SavePositionAsync()
     {

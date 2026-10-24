@@ -26,6 +26,11 @@ public sealed class TrayIconService : IDisposable
     private readonly WinForms.ToolStripMenuItem _launchAtStartupItem;
     private readonly WinForms.ToolStripMenuItem _upgradeItem;
     private readonly WinForms.ToolStripMenuItem _versionItem;
+    private readonly WinForms.ToolStripMenuItem _skinsItem;
+    private readonly WinForms.ToolStripMenuItem _languageItem;
+    private readonly WinForms.ToolStripMenuItem _refreshItem;
+    private readonly WinForms.ToolStripMenuItem _homeItem;
+    private readonly WinForms.ToolStripMenuItem _exitItem;
     private bool _disposed;
     private Icon? _dynamicIcon;
 
@@ -37,14 +42,19 @@ public sealed class TrayIconService : IDisposable
         _defaultIcon = LoadDefaultIcon();
 
         _statusItem = new WinForms.ToolStripMenuItem("Waiting for Codex") { Enabled = false };
-        var refreshItem = new WinForms.ToolStripMenuItem("Refresh");
-        refreshItem.Click += async (_, _) => await _viewModel.RefreshAsync();
+        _refreshItem = new WinForms.ToolStripMenuItem("Refresh");
+        _refreshItem.Click += async (_, _) => await _viewModel.RefreshAsync();
 
         _alwaysOnTopItem = new WinForms.ToolStripMenuItem("Always On Top") { CheckOnClick = true };
         _alwaysOnTopItem.Click += async (_, _) => await _window.SetAlwaysOnTopAsync(_alwaysOnTopItem.Checked);
 
-        _edgeHideItem = new WinForms.ToolStripMenuItem("Edge Hide (Alt+C)") { CheckOnClick = true };
+        _edgeHideItem = new WinForms.ToolStripMenuItem("Edge Hide (Alt+H)") { CheckOnClick = true };
         _edgeHideItem.Click += async (_, _) => await _window.SetEdgeHideModeAsync(_edgeHideItem.Checked);
+
+        _languageItem = new WinForms.ToolStripMenuItem();
+        _languageItem.DropDownOpening += (_, _) => PopulateLanguages();
+        _skinsItem = new WinForms.ToolStripMenuItem("外观 (Alt+C)");
+        _skinsItem.DropDownOpening += (_, _) => PopulateSkins();
 
         _launchAtStartupItem = new WinForms.ToolStripMenuItem("Launch at Startup") { CheckOnClick = true };
         _launchAtStartupItem.Visible = !_isPackaged;
@@ -54,16 +64,16 @@ public sealed class TrayIconService : IDisposable
             _launchAtStartupItem.Checked = _startupService.IsEnabled();
         };
 
-        var homeItem = new WinForms.ToolStripMenuItem("Home");
-        homeItem.Click += (_, _) => ProjectHomeService.Open();
+        _homeItem = new WinForms.ToolStripMenuItem("Home");
+        _homeItem.Click += (_, _) => ProjectHomeService.Open();
 
         _upgradeItem = new WinForms.ToolStripMenuItem("Upgrade") { Visible = false };
         _upgradeItem.Click += async (_, _) => await StartUpgradeAsync();
 
         _versionItem = new WinForms.ToolStripMenuItem($"Version {_updateService.CurrentVersionText}") { Enabled = false };
 
-        var exitItem = new WinForms.ToolStripMenuItem("Exit");
-        exitItem.Click += (_, _) => WpfApplication.Current.Shutdown();
+        _exitItem = new WinForms.ToolStripMenuItem("Exit");
+        _exitItem.Click += (_, _) => WpfApplication.Current.Shutdown();
 
         _notifyIcon = new WinForms.NotifyIcon
         {
@@ -76,24 +86,28 @@ public sealed class TrayIconService : IDisposable
         [
             _statusItem,
             new WinForms.ToolStripSeparator(),
-            refreshItem,
+            _refreshItem,
+            _skinsItem,
+            _languageItem,
             new WinForms.ToolStripSeparator(),
             _edgeHideItem,
             _alwaysOnTopItem,
             new WinForms.ToolStripSeparator(),
             _launchAtStartupItem,
-            homeItem,
+            _homeItem,
             _upgradeItem,
             new WinForms.ToolStripSeparator(),
             _versionItem,
             new WinForms.ToolStripSeparator(),
-            exitItem
+            _exitItem
         ]);
         _notifyIcon.ContextMenuStrip.Opening += (_, _) => UpdateSettingsState();
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.CodexActivityChanged += OnCodexActivityChanged;
         _updateService.StateChanged += OnUpdateStateChanged;
+        AppLocalization.Current.PropertyChanged += OnLanguageChanged;
+        UpdateLanguage();
         UpdateSettingsState();
         UpdateIcon();
         UpdateUpgradeState();
@@ -108,7 +122,7 @@ public sealed class TrayIconService : IDisposable
         }
         catch (Exception ex)
         {
-            WinForms.MessageBox.Show(ex.Message, "CodexBall Upgrade", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+            WinForms.MessageBox.Show(ex.Message, AppLocalization.Text("CodexBall Upgrade"), WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
         }
     }
 
@@ -120,9 +134,9 @@ public sealed class TrayIconService : IDisposable
         _upgradeItem.Visible = !_isPackaged && _updateService.IsUpgradeAvailable;
         _upgradeItem.Enabled = !_updateService.IsUpgradeInProgress;
         _upgradeItem.Text = _updateService.LatestVersionText is null
-            ? "Upgrade"
-            : $"Upgrade to {_updateService.LatestVersionText}";
-        _versionItem.Text = $"Version {_updateService.CurrentVersionText}";
+            ? AppLocalization.Text("Upgrade")
+            : AppLocalization.Format("Upgrade to {0}", _updateService.LatestVersionText);
+        _versionItem.Text = AppLocalization.Format("Version {0}", _updateService.CurrentVersionText);
     }
 
     private void UpdateSettingsState()
@@ -132,6 +146,46 @@ public sealed class TrayIconService : IDisposable
         if (!_isPackaged)
         {
             _launchAtStartupItem.Checked = _startupService.IsEnabled();
+        }
+    }
+
+    private void OnLanguageChanged(object? sender, PropertyChangedEventArgs e) => UpdateLanguage();
+
+    private void UpdateLanguage()
+    {
+        _refreshItem.Text = AppLocalization.Text("Refresh");
+        _homeItem.Text = AppLocalization.Text("Home");
+        _exitItem.Text = AppLocalization.Text("Exit");
+        _alwaysOnTopItem.Text = AppLocalization.Text("Always On Top");
+        _edgeHideItem.Text = AppLocalization.Text("Edge Hide (Alt+H)");
+        _skinsItem.Text = AppLocalization.Text("Appearance (Alt+C)");
+        _languageItem.Text = AppLocalization.Text("Language");
+        _launchAtStartupItem.Text = AppLocalization.Text("Launch at Startup");
+        UpdateUpgradeState();
+        UpdateIcon();
+    }
+
+    private void PopulateLanguages()
+    {
+        foreach (WinForms.ToolStripItem old in _languageItem.DropDownItems.Cast<WinForms.ToolStripItem>().ToArray()) old.Dispose();
+        _languageItem.DropDownItems.Clear();
+        foreach (var (id, label) in new[] { ("system", AppLocalization.Text("Follow system")), ("zh-CN", "中文"), ("en-US", "English") })
+        {
+            var item = new WinForms.ToolStripMenuItem(label) { Checked = id == AppLocalization.Current.Preference };
+            item.Click += async (_, _) => await _window.SetLanguageAsync(id);
+            _languageItem.DropDownItems.Add(item);
+        }
+    }
+
+    private void PopulateSkins()
+    {
+        foreach (WinForms.ToolStripItem old in _skinsItem.DropDownItems.Cast<WinForms.ToolStripItem>().ToArray()) old.Dispose();
+        _skinsItem.DropDownItems.Clear();
+        foreach (var entry in Companion.SkinCatalog.Discover(out _))
+        {
+            var item = new WinForms.ToolStripMenuItem(AppLocalization.Current.IsChinese ? entry.Name : entry.Id switch { "local-koharu" => "Koharu", "local-haruto" => "Haruto", "local-mao_pro" => "Mao", "local-mark_free_t04" => "Mark", _ => entry.Name }) { Checked = entry.Id == _window.SelectedSkinId };
+            item.Click += async (_, _) => await _window.SelectAppearanceAsync(entry.Id);
+            _skinsItem.DropDownItems.Add(item);
         }
     }
 
@@ -151,7 +205,7 @@ public sealed class TrayIconService : IDisposable
     private void UpdateIcon()
     {
         var percent = _viewModel.TrayUsagePercent;
-        _statusItem.Text = percent is null ? "Waiting for Codex" : _viewModel.ShortWindowPercent;
+        _statusItem.Text = percent is null ? AppLocalization.Text("Waiting for Codex") : _viewModel.ShortWindowPercent;
         _notifyIcon.Text = TrimNotifyText(percent is null ? "CodexBall" : $"CodexBall {percent}%");
 
         if (percent is null)
@@ -240,6 +294,7 @@ public sealed class TrayIconService : IDisposable
         }
 
         _disposed = true;
+        AppLocalization.Current.PropertyChanged -= OnLanguageChanged;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.CodexActivityChanged -= OnCodexActivityChanged;
         _updateService.StateChanged -= OnUpdateStateChanged;

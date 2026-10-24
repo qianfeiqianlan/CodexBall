@@ -25,8 +25,12 @@ jobs:
       - name: Restore
         run: dotnet restore
 
+      - name: Prepare official Live2D preview assets
+        shell: pwsh
+        run: ./scripts/Setup-Live2D.ps1
+
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test --configuration Release --no-build
+      - name: Test (graphics integration requires a local OpenGL 3.3 GPU)
+        run: dotnet test --configuration Release --no-build --filter "Category!=Live2DGraphics"

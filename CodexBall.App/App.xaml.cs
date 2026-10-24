@@ -27,12 +27,15 @@ public partial class App : Application
         _ownsSingleInstanceMutex = true;
         var settingsService = new SettingsService();
         var settings = await settingsService.LoadAsync();
+        AppLocalization.Current.Apply(settings.Language);
         var processMonitor = new CodexProcessMonitor();
         var updateService = new UpdateService();
         _viewModel = new StatusBallViewModel(processMonitor);
 
         var window = new MainWindow(_viewModel, settingsService, settings);
         MainWindow = window;
+        // Register global hotkeys even when the ring starts hidden because Codex is inactive.
+        new System.Windows.Interop.WindowInteropHelper(window).EnsureHandle();
         _trayIconService = new TrayIconService(_viewModel, window, updateService);
         _viewModel.CodexActivityChanged += (_, isActive) =>
         {
@@ -50,6 +53,8 @@ public partial class App : Application
         {
             _ = updateService.CheckForUpdatesAsync();
         }
+
+        if (settings.CompanionMode) window.ShowForCodex();
 
         await _viewModel.StartAsync();
     }

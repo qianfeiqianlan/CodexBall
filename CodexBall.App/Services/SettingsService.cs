@@ -7,10 +7,11 @@ public sealed class SettingsService
 {
     private readonly string _settingsPath;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
 
-    public SettingsService()
+    public SettingsService(string? directory = null)
     {
-        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CodexBall");
+        directory ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CodexBall");
         Directory.CreateDirectory(directory);
         _settingsPath = Path.Combine(directory, "settings.json");
     }
@@ -28,13 +29,18 @@ public sealed class SettingsService
 
     public async Task SaveAsync(AppSettings settings)
     {
-        var temporaryPath = $"{_settingsPath}.tmp";
-        await using (var stream = File.Create(temporaryPath))
+        await _saveLock.WaitAsync();
+        try
         {
-            await JsonSerializer.SerializeAsync(stream, settings, _jsonOptions);
-        }
+            var temporaryPath = $"{_settingsPath}.tmp";
+            await using (var stream = File.Create(temporaryPath))
+            {
+                await JsonSerializer.SerializeAsync(stream, settings, _jsonOptions);
+            }
 
-        File.Copy(temporaryPath, _settingsPath, overwrite: true);
-        File.Delete(temporaryPath);
+            File.Copy(temporaryPath, _settingsPath, overwrite: true);
+            File.Delete(temporaryPath);
+        }
+        finally { _saveLock.Release(); }
     }
 }

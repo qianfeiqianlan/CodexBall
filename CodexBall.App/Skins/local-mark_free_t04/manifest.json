@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "local-mark_free_t04",
+  "name": "马克君 Mark",
+  "author": "Live2D Inc. (user-downloaded official sample)",
+  "license": "Live2D Free Material License; see Source-ReadMe.txt and THIRD-PARTY-NOTICES.md",
+  "width": 240,
+  "height": 320,
+  "head": {
+    "y": 10,
+    "x": 35,
+    "width": 170,
+    "height": 115
+  },
+  "orb": {
+    "y": 250,
+    "x": 196,
+    "width": 38,
+    "height": 38
+  },
+  "live2DModel": "model/mark_free_t04.model3.json",
+  "motionGroups": {
+    "Idle": "Idle",
+    "QuotaRecovered": "Tap",
+    "Pat": "Tap"
+  }
+}

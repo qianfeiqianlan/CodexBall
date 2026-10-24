@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "local-haruto",
+  "name": "春翔 Haruto · Q版",
+  "author": "Live2D Inc. (user-downloaded official sample)",
+  "license": "Live2D Free Material License; see Source-ReadMe.txt and THIRD-PARTY-NOTICES.md",
+  "width": 240,
+  "height": 260,
+  "head": {
+    "y": 10,
+    "x": 35,
+    "width": 170,
+    "height": 140
+  },
+  "orb": {
+    "y": 190,
+    "x": 196,
+    "width": 38,
+    "height": 38
+  },
+  "live2DModel": "model/haruto.model3.json",
+  "motionGroups": {
+    "Idle": "Idle",
+    "QuotaRecovered": "Tap",
+    "Pat": "Tap"
+  }
+}

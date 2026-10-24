@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "cream-pink",
+  "name": "奶油小搭档",
+  "author": "CodexBall / AI concept",
+  "license": "AI-generated prototype; project license applies",
+  "width": 144,
+  "height": 180,
+  "head": { "x": 20, "y": 5, "width": 105, "height": 72 },
+  "orb": { "x": 54, "y": 86, "width": 34, "height": 34 },
+  "actions": {
+    "Idle": {
+      "loop": true,
+      "frames": [{ "file": "poses.png", "durationMs": 1000, "crop": { "x": 0, "y": 0, "width": 583, "height": 899 } }]
+    },
+    "Pat": {
+      "orb": { "x": 108, "y": 117, "width": 34, "height": 34 },
+      "frames": [{ "file": "poses.png", "durationMs": 1200, "crop": { "x": 583, "y": 0, "width": 583, "height": 899 } }]
+    },
+    "Drag": {
+      "loop": true,
+      "orb": { "x": 108, "y": 125, "width": 34, "height": 34 },
+      "frames": [{ "file": "poses.png", "durationMs": 1000, "crop": { "x": 1166, "y": 0, "width": 583, "height": 899 } }]
+    }
+  }
+}

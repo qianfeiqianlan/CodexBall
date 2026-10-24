@@ -6,6 +6,7 @@ using CodexBall.App.Services;
 using CodexBall.Core.Codex;
 using CodexBall.Core.Models;
 using CodexBall.Core.Utils;
+using CodexBall.Core.Companion;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 
@@ -21,10 +22,13 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
     private CodexUsageSnapshot _snapshot = CodexUsageSnapshot.Unavailable(AccountState.Unknown, "Loading");
     private bool _isRefreshing;
     private bool _isCodexActive;
+    private readonly QuotaReactionTracker _quotaReactions = new();
+    public event EventHandler<CompanionAction>? CompanionReaction;
 
     public StatusBallViewModel(CodexProcessMonitor processMonitor)
     {
         _processMonitor = processMonitor;
+        AppLocalization.Current.PropertyChanged += OnLanguageChanged;
         _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
         _pollTimer.Tick += async (_, _) => await RefreshAsync();
 
@@ -62,9 +66,9 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
     public string StatusText => _snapshot.AccountState switch
     {
         AccountState.Available => "Codex",
-        AccountState.NotLoggedIn => "Not logged in",
-        AccountState.CodexNotFound => "Codex not found",
-        _ => "Unavailable"
+        AccountState.NotLoggedIn => AppLocalization.Text("Not logged in"),
+        AccountState.CodexNotFound => AppLocalization.Text("Codex not found"),
+        _ => AppLocalization.Text("Unavailable")
     };
 
     public Brush RingBrush => _snapshot.ShortWindow?.RemainingPercent switch
@@ -79,31 +83,43 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
         ? new SolidColorBrush(Color.FromRgb(130, 140, 150))
         : new SolidColorBrush(Color.FromRgb(75, 179, 255));
 
-    public string TooltipText => RateLimitFormatter.FormatTooltip(_snapshot);
+    public string TooltipText => BuildTooltip();
 
     public string ShortWindowLabel => _snapshot.ShortWindow is null
-        ? "Short window"
-        : RateLimitFormatter.FormatWindowLabel(_snapshot.ShortWindow.WindowDurationMins);
+        ? AppLocalization.Text("Short window")
+        : RateLimitFormatter.FormatWindowLabel(_snapshot.ShortWindow.WindowDurationMins, AppLocalization.Current.IsChinese);
 
-    public string ShortWindowPercent => _snapshot.ShortWindow is null ? "--" : $"{_snapshot.ShortWindow.RemainingPercent}% left";
+    public string ShortWindowPercent => _snapshot.ShortWindow is null ? "--" : AppLocalization.Format("{0}% left", _snapshot.ShortWindow.RemainingPercent);
 
     public double ShortWindowProgress => _snapshot.ShortWindow?.RemainingPercent ?? 0;
 
-    public string ShortWindowReset => _snapshot.ShortWindow is null ? _snapshot.Message ?? "Unavailable" : $"Reset {TimeFormatter.FormatReset(_snapshot.ShortWindow.ResetsAt)}";
+    public string ShortWindowReset => _snapshot.ShortWindow is null ? AppLocalization.Text(_snapshot.Message ?? "Unavailable") : AppLocalization.Format("Reset {0}", TimeFormatter.FormatReset(_snapshot.ShortWindow.ResetsAt, chinese: AppLocalization.Current.IsChinese));
 
     public string LongWindowLabel => _snapshot.LongWindow is null
-        ? "Long window"
-        : RateLimitFormatter.FormatWindowLabel(_snapshot.LongWindow.WindowDurationMins);
+        ? AppLocalization.Text("Long window")
+        : RateLimitFormatter.FormatWindowLabel(_snapshot.LongWindow.WindowDurationMins, AppLocalization.Current.IsChinese);
 
-    public string LongWindowPercent => _snapshot.LongWindow is null ? "--" : $"{_snapshot.LongWindow.RemainingPercent}% left";
+    public string LongWindowPercent => _snapshot.LongWindow is null ? "--" : AppLocalization.Format("{0}% left", _snapshot.LongWindow.RemainingPercent);
 
     public double LongWindowProgress => _snapshot.LongWindow?.RemainingPercent ?? 0;
 
-    public string LongWindowReset => _snapshot.LongWindow is null ? "Unavailable" : $"Reset {TimeFormatter.FormatReset(_snapshot.LongWindow.ResetsAt)}";
+    public string LongWindowReset => _snapshot.LongWindow is null ? AppLocalization.Text("Unavailable") : AppLocalization.Format("Reset {0}", TimeFormatter.FormatReset(_snapshot.LongWindow.ResetsAt, chinese: AppLocalization.Current.IsChinese));
 
     public string LastUpdatedText => _snapshot.AccountState == AccountState.Available
-        ? $"Last update {_snapshot.LastUpdatedAt.LocalDateTime:HH:mm}"
-        : _snapshot.Message ?? "Unavailable";
+        ? AppLocalization.Format("Last update {0}", _snapshot.LastUpdatedAt.LocalDateTime.ToString("HH:mm"))
+        : AppLocalization.Text(_snapshot.Message ?? "Unavailable");
+
+    private void OnLanguageChanged(object? sender, PropertyChangedEventArgs e) => NotifyComputedProperties();
+
+    private string BuildTooltip()
+    {
+        if (_snapshot.ShortWindow is null) return $"Codex\n{AppLocalization.Text(_snapshot.Message ?? "Unavailable")}";
+        var lines = new List<string> { "Codex", "", $"{ShortWindowLabel}  {ShortWindowPercent}" };
+        if (_snapshot.LongWindow is not null && _snapshot.LongWindow != _snapshot.ShortWindow)
+            lines.Add($"{LongWindowLabel}  {LongWindowPercent}");
+        lines.Add(ShortWindowReset);
+        return string.Join(Environment.NewLine, lines);
+    }
 
     public async Task StartAsync()
     {
@@ -124,6 +140,7 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             if (!_processMonitor.IsCodexRunning())
             {
+                Snapshot = CodexUsageSnapshot.Unavailable(AccountState.Unknown, "Codex is not running");
                 SetCodexActive(false);
                 await _usageService.StopAsync();
                 return;
@@ -144,6 +161,8 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             _snapshot = value;
             NotifyComputedProperties();
+            if (_quotaReactions.Observe(value.ShortWindow) is { } reaction)
+                CompanionReaction?.Invoke(this, reaction);
         }
     }
 
@@ -198,6 +217,7 @@ public sealed class StatusBallViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public async ValueTask DisposeAsync()
     {
+        AppLocalization.Current.PropertyChanged -= OnLanguageChanged;
         _pollTimer.Stop();
         _clockTimer.Stop();
         _debounceTimer.Stop();
