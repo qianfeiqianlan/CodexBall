@@ -24,6 +24,8 @@ Choose a 64 × 64 DIP WPF floating ring or a Live2D companion. Both can hide at 
 
 ## Desktop Companion Preview
 
+![CodexBall Live2D companions — Koharu, Haruto, Mao, and Mark](docs/assets/codexball-companions.svg)
+
 Global shortcuts: **Alt+H** toggles edge hiding; **Alt+C** cycles through available appearances in tray-menu order and wraps back to CodexBall.
 
 Right-click the system tray icon and open **Appearance / 外观**. Choose **CodexBall** for the 64 × 64 ring, or choose an installed bundled character to enter companion mode automatically. Click the character's head for a reaction, drag to move, and click the thin usage bar for details. The widget itself has no right-click menu.
