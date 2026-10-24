@@ -23,7 +23,7 @@
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="SkiaSharp" Version="2.88.9" />
     <Resource Include="Assets\CodexBall.ico" />
-    <Content Include="Skins\**\*" Exclude="Skins\live2d-haru\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Skins\**\*" Exclude="Skins\live2d-haru\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="Live2D\Live2DCubismCore.dll" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" Link="Live2DCubismCore.dll" Condition="Exists('Live2D\Live2DCubismCore.dll')" />
     <Content Include="Live2D\Licenses\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
