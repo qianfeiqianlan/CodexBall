@@ -1,5 +1,19 @@
 # 本地下载模型接入记录
 
+## Release 自动准备
+
+Release 工作流在构建前运行 `Download-Live2DModels.ps1`，从官方 Cubism 下载三个 ZIP（小春／春翔、Mao、Mark），并校验固定的 SHA-256。随后导入全部运行目录文件和原始 ReadMe；已有的 `manifest.json` 保持原样，不会覆盖角色布局、动作映射和用量条偏移。仅新外观目录会生成初始 manifest。
+
+`Test-Live2DModels.ps1` 会在导入后及发布目录压缩前检查四个角色的模型、所有引用素材和来源 ReadMe；缺少文件会使 Release 失败。模型仍不纳入 Git，最终发布 ZIP 包含模型素材。
+
+本地复现：
+
+```powershell
+pwsh -File ./scripts/Download-Live2DModels.ps1
+pwsh -File ./scripts/Import-Live2DModels.ps1 -SourceDirectory ./artifacts/model-downloads
+pwsh -File ./scripts/Test-Live2DModels.ps1
+```
+
 2026-10-24，来源为用户放在 `tmp/` 内的官方免费示例 ZIP。只复制导出的运行素材与原始 ReadMe，不修改模型设计，不将 PSD、编辑工程和背景图片打包进桌宠。
 
 | 压缩包 | 接入角色 | 外观 ID | 处理结果 |

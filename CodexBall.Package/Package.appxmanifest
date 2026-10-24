@@ -10,7 +10,7 @@
   <Identity
     Name="YYStudio.CodexBall"
     Publisher="CN=1A944E6A-7FDD-4259-99AE-72D4DA5578AC"
-    Version="0.2.6.0" />
+    Version="0.2.7.0" />
 
   <Properties>
     <DisplayName>CodexBall</DisplayName>

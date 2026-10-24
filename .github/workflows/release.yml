@@ -28,7 +28,15 @@ jobs:
         shell: pwsh
         run: ./scripts/Setup-Live2D.ps1
 
-      - name: Test
+      - name: Download and import bundled Live2D models
+        shell: pwsh
+        run: |
+          ./scripts/Download-Live2DModels.ps1
+          ./scripts/Import-Live2DModels.ps1 -SourceDirectory ./artifacts/model-downloads
+          ./scripts/Test-Live2DModels.ps1
+          git diff --exit-code -- CodexBall.App/Skins
+
+      - name: Test with bundled models
         run: dotnet test --configuration Release --no-restore --filter "Category!=Live2DGraphics"
 
       - name: Get version
@@ -52,6 +60,7 @@ jobs:
       - name: Package release asset
         shell: pwsh
         run: |
+          ./scripts/Test-Live2DModels.ps1 -SkinsDirectory ./artifacts/CodexBall/Skins
           $version = "${{ steps.get_version.outputs.VERSION }}"
           Compress-Archive -Path .\artifacts\CodexBall\* -DestinationPath ".\artifacts\CodexBall-$version-win-x64.zip" -Force
 

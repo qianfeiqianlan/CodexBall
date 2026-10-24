@@ -15,7 +15,9 @@ The local preview uses the Windows x64 Core DLL from **Cubism SDK for Native 5 R
 - [Sample model terms](https://www.live2d.com/en/learn/sample/model-terms/)
 - [Publication and expandable application licensing](https://www.live2d.com/en/sdk/license/)
 
-The Core DLL is prepared locally by `scripts/Setup-Live2D.ps1`; the four sample models are extracted from local ZIPs by `scripts/Import-Live2DModels.ps1`. These runtime assets are excluded from Git. The import script retains each source ReadMe alongside its model; the individual model conditions continue to apply. Original SDK license notices and the redistributable file list are copied to the app output under `Live2D/Licenses`. This is a local technical verification, not confirmation of publication rights for a model-importing application.
+The Core DLL is prepared by `scripts/Setup-Live2D.ps1`. Release builds download official sample archives using `scripts/Download-Live2DModels.ps1`, verify their pinned SHA-256 hashes, and import runtime assets using `scripts/Import-Live2DModels.ps1` without overwriting curated manifests. These runtime assets are excluded from Git but included in release packages. Each source ReadMe is retained alongside its model. Original SDK license notices and the redistributable file list are copied to the app output under `Live2D/Licenses`. Models and SDK components retain their own licenses and are not covered by CodexBall's MIT license.
+
+This content uses sample data owned and copyrighted by Live2D Inc. The sample data are utilized in accordance with terms and conditions set by Live2D Inc. This content itself is created at the author's sole discretion.
 
 ## Community C# adapter
 

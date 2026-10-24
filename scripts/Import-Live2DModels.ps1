@@ -35,6 +35,12 @@ foreach ($archive in Get-ChildItem -LiteralPath $SourceDirectory -Filter '*.zip'
         Copy-Item -Path (Join-Path $model.Directory.FullName '*') -Destination $modelRoot -Recurse -Force
         $readme = Get-ChildItem -LiteralPath $extractRoot -Recurse -Filter 'ReadMe.txt' | Select-Object -First 1
         if ($readme) { Copy-Item -LiteralPath $readme.FullName -Destination (Join-Path $packRoot 'Source-ReadMe.txt') -Force }
+        # Curated manifests contain application-specific layout and action settings.
+        # Refresh all runtime assets, but never overwrite an existing manifest.
+        if (Test-Path -LiteralPath (Join-Path $packRoot 'manifest.json')) {
+            Write-Host "Imported $name -> $id (preserved manifest.json)"
+            continue
+        }
         $definition = Get-Content -LiteralPath $model.FullName -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
         $groups = @($definition.FileReferences.Motions.Keys)
         $tapGroup = 'Idle'

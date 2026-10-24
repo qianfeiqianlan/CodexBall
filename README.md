@@ -74,6 +74,14 @@ For published builds, download the latest `CodexBall-*-win-x64.zip` from GitHub 
 
 Windows may show a SmartScreen warning for unsigned community builds. Check that the zip came from this repository's Releases page before running it.
 
+## Microsoft Store Packaging
+
+In Visual Studio, select `Release | x64` and create the Store package from `CodexBall.Package`. In the package wizard, select only `x64`. The app and bundled Live2D Cubism Core require x64; x86, ARM, ARM64, and AnyCPU packages are unsupported. A previously uploaded x86 package does not change this requirement.
+
+The packaging project restores referenced .NET projects with the publish properties before publishing, including the Visual Studio wizard's separate `obj/wappublish/win-x64` assets directory.
+
+Keep the existing Store identity and publisher when creating an update, and use a package version newer than the previous upload. Check that the generated upload filename contains `_x64_` before submitting it.
+
 ## Privacy And Security Boundaries
 
 CodexBall is intentionally small and local:
