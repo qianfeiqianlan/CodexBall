@@ -37,7 +37,6 @@ CodexBall.App/Live2D/Licenses/
 *.appxsym
 *.pfx
 *.assets.cache
-tmp
 
 # MSIX packaging local output
 CodexBall.Package/AppPackages/
@@ -47,3 +46,5 @@ CodexBall.Package/BundleArtifacts/
 .env
 .env.*
 appsettings.Local.json
+tmp
+docs/social-media/
