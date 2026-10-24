@@ -6,6 +6,7 @@
   "license": "Live2D Free Material License; see Source-ReadMe.txt and THIRD-PARTY-NOTICES.md",
   "width": 240,
   "height": 320,
+  "usageBarOffsetY": -60,
   "head": {
     "y": 10,
     "x": 35,

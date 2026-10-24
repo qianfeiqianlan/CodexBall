@@ -21,6 +21,8 @@ public static class SkinLoader
         if (!ValidSize(skin.Width, 64, 512) || !ValidSize(skin.Height, 64, 512))
             throw new InvalidDataException("外观画布必须在 64 至 512 DIP 之间。");
         ValidateRect(skin.Head, skin.Width, skin.Height);
+        if (!double.IsFinite(skin.UsageBarOffsetY) || skin.UsageBarOffsetY < -skin.Height || skin.UsageBarOffsetY > 0)
+            throw new InvalidDataException("用量条垂直偏移必须在负画布高度至 0 DIP 之间。");
         ValidateRect(skin.Orb, skin.Width, skin.Height);
         if (skin.Live2DModel is not null)
         {

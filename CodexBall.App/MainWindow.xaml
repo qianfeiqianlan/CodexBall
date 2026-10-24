@@ -43,7 +43,7 @@
         <Canvas x:Name="CharacterCanvas" HorizontalAlignment="Center">
         <Image x:Name="CharacterImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
         </Canvas>
-        <Border x:Name="UsageBar" Grid.Row="1" Margin="24,8,24,8" Background="Transparent"
+        <Border x:Name="UsageBar" Grid.Row="1" Width="120" HorizontalAlignment="Center" Margin="0,8,0,8" Background="Transparent"
                 Cursor="Hand" ToolTip="{Binding [Click to view usage details], Source={x:Static services:AppLocalization.Current}}" AutomationProperties.Name="{Binding [Codex remaining quota], Source={x:Static services:AppLocalization.Current}}">
             <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress, Mode=OneWay}"
                          Foreground="{Binding RingBrush}" Background="#99424957" BorderThickness="0"
@@ -77,7 +77,21 @@
           </StackPanel>
         </Border>
       </Popup>
-      <Border x:Name="EdgeRevealHandle" Visibility="Collapsed" Background="#CCB8D8D0"
-              CornerRadius="3" Cursor="Hand" ToolTip="{Binding [Show CodexBall], Source={x:Static services:AppLocalization.Current}}" />
+      <Border x:Name="EdgeRevealHandle" Visibility="Collapsed" Background="#99424957"
+              CornerRadius="3" Cursor="Hand" ToolTip="{Binding TooltipText}">
+        <ProgressBar x:Name="EdgeUsageProgress" Minimum="0" Maximum="100"
+                     Value="{Binding Progress, Mode=OneWay}" Foreground="{Binding RingBrush}"
+                     Background="Transparent" BorderThickness="0" IsHitTestVisible="False"
+                     AutomationProperties.Name="{Binding [Codex remaining quota], Source={x:Static services:AppLocalization.Current}}">
+          <ProgressBar.Template>
+            <ControlTemplate TargetType="ProgressBar">
+              <Grid x:Name="PART_Track" Background="{TemplateBinding Background}">
+                <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
+                        CornerRadius="3" HorizontalAlignment="Left" />
+              </Grid>
+            </ControlTemplate>
+          </ProgressBar.Template>
+        </ProgressBar>
+      </Border>
     </Grid>
 </Window>

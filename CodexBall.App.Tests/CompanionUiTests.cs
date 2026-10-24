@@ -17,6 +17,51 @@ namespace CodexBall.App.Tests;
 public sealed class CompanionUiTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EdgeQuotaFillHasVisibleThicknessAndTracksValue(bool sideEdge)
+        => RunSta(async () =>
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "CodexBall-edge-" + Guid.NewGuid());
+            var service = new SettingsService(directory);
+            await using var vm = new StatusBallViewModel(new CodexProcessMonitor());
+            var window = new MainWindow(vm, service, new AppSettings());
+            try
+            {
+                var bar = (ProgressBar)window.FindName("EdgeUsageProgress");
+                // Detach from the collapsed handle to exercise the actual XAML template.
+                ((Border)window.FindName("EdgeRevealHandle")).Child = null;
+                bar.ApplyTemplate();
+                var host = new Window { Content = bar, ShowInTaskbar = false, WindowStyle = WindowStyle.None, AllowsTransparency = true, ResizeMode = ResizeMode.NoResize };
+                host.Show();
+                bar.LayoutTransform = sideEdge ? new RotateTransform(-90) : Transform.Identity;
+                foreach (var value in new[] { 0d, 50d, 100d })
+                {
+                    bar.Value = value;
+                    var size = sideEdge ? new Size(3, 240) : new Size(240, 3);
+                    host.Width = size.Width;
+                    host.Height = size.Height;
+                    host.UpdateLayout();
+                    bar.Measure(size);
+                    bar.Arrange(new Rect(size));
+                    bar.UpdateLayout();
+                    await Dispatcher.CurrentDispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                    var indicator = (Border)bar.Template.FindName("PART_Indicator", bar);
+                    var bounds = indicator.TransformToAncestor(bar).TransformBounds(new Rect(indicator.RenderSize));
+                    if (value > 0) Assert.Equal(3, bounds.Height, 3);
+                    Assert.Equal(240 * value / 100, bounds.Width, 3);
+                }
+                host.Close();
+            }
+            finally
+            {
+                window.Close();
+                await service.SaveAsync(new AppSettings());
+                Directory.Delete(directory, true);
+            }
+        });
+
+    [Theory]
     [InlineData("system", "zh-TW", "zh-CN")]
     [InlineData("system", "en-US", "en-US")]
     [InlineData("system", "ja-JP", "en-US")]

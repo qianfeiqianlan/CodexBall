@@ -25,12 +25,13 @@ public partial class MainWindow : Window
     private const int VirtualKeyC = 0x43;
     private const int VirtualKeyH = 0x48;
     private const int WmHotKey = 0x0312;
-    private const double VisibleStrip = 6;
+    private const double VisibleStrip = 3;
 
     private readonly StatusBallViewModel _viewModel;
     private readonly SettingsService _settingsService;
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _peekTimer;
+    private long _suppressEdgePeekUntil;
     private Point _mouseDownPosition;
     private bool _isDragging;
     private bool _dragGesture;
@@ -189,11 +190,7 @@ public partial class MainWindow : Window
             finally
             {
                 _isDragging = false;
-                ClampToWorkArea();
-                CaptureVisiblePosition();
-                PlayAction(CodexBall.Core.Companion.CompanionAction.Drop, force: true);
-                RecordInteraction();
-                await SavePositionAsync();
+                await FinishDragAsync();
             }
         }
 
@@ -247,10 +244,26 @@ public partial class MainWindow : Window
         _manualDrag = false;
         _isDragging = false;
         if (IsMouseCaptured) ReleaseMouseCapture();
+        await FinishDragAsync();
+    }
+
+    private async Task FinishDragAsync()
+    {
+        var area = CurrentWorkArea();
+        // Check the released position before clamping removes the crossed-edge signal.
+        var hideAtEdge = EdgeHideGeometry.IsBeyondWorkArea(Left, Top, Width, Height,
+            area.Left, area.Top, area.Width, area.Height);
         ClampToWorkArea();
         CaptureVisiblePosition();
         PlayAction(CodexBall.Core.Companion.CompanionAction.Drop, force: true);
         RecordInteraction();
+        if (hideAtEdge)
+        {
+            // The released pointer may still overlap the reveal strip during the slide.
+            _suppressEdgePeekUntil = Environment.TickCount64 + 1000;
+            await SetEdgeHideModeAsync(true);
+            return;
+        }
         await SavePositionAsync();
     }
 
@@ -341,6 +354,10 @@ public partial class MainWindow : Window
         _visibleTop = placement.VisibleTop;
         _hiddenLeft = placement.HiddenLeft;
         _hiddenTop = placement.HiddenTop;
+        // WPF's ProgressBar sizes PART_Indicator along X; rotate the complete
+        // horizontal control so the same fill calculation also works at side edges.
+        EdgeUsageProgress.LayoutTransform = placement.Edge is HideEdge.Left or HideEdge.Right
+            ? new System.Windows.Media.RotateTransform(-90) : System.Windows.Media.Transform.Identity;
         EdgeRevealHandle.Width = placement.Edge is HideEdge.Left or HideEdge.Right ? VisibleStrip : double.NaN;
         EdgeRevealHandle.Height = placement.Edge is HideEdge.Top or HideEdge.Bottom ? VisibleStrip : double.NaN;
         EdgeRevealHandle.HorizontalAlignment = placement.Edge switch
@@ -367,6 +384,7 @@ public partial class MainWindow : Window
 
     private void PeekFromEdge()
     {
+        if (Environment.TickCount64 < _suppressEdgePeekUntil) return;
         if (!_settings.EdgeHideEnabled || (!_isHiddenAtEdge && !_isPeeking))
         {
             return;

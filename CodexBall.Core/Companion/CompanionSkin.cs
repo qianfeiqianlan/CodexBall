@@ -48,6 +48,7 @@ public sealed class CompanionSkin
     public Dictionary<string, string> MotionGroups { get; set; } = [];
     public double Width { get; set; } = 144;
     public double Height { get; set; } = 180;
+    public double UsageBarOffsetY { get; set; }
     public SkinRect Head { get; set; } = new() { X = 25, Y = 15, Width = 95, Height = 65 };
     public SkinRect Orb { get; set; } = new() { X = 55, Y = 85, Width = 34, Height = 34 };
     public Dictionary<string, SkinAnimation> Actions { get; set; } = new(StringComparer.Ordinal);

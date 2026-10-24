@@ -6,6 +6,11 @@ public sealed record EdgeHidePlacement(HideEdge Edge, double VisibleLeft, double
 
 public static class EdgeHideGeometry
 {
+    public static bool IsBeyondWorkArea(double left, double top, double width, double height,
+        double workLeft, double workTop, double workWidth, double workHeight)
+        => left < workLeft || top < workTop
+            || left + width > workLeft + workWidth || top + height > workTop + workHeight;
+
     public static EdgeHidePlacement Calculate(double left, double top, double width, double height,
         double workLeft, double workTop, double workWidth, double workHeight, double visibleStrip = 6)
     {

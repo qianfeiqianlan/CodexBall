@@ -5,6 +5,28 @@ namespace CodexBall.Tests;
 public sealed class EdgeHideGeometryTests
 {
     [Theory]
+    [InlineData(-1, 400, true)]
+    [InlineData(901, 400, true)]
+    [InlineData(400, -1, true)]
+    [InlineData(400, 901, true)]
+    [InlineData(-1, -1, true)]
+    [InlineData(0, 400, false)]
+    [InlineData(900, 400, false)]
+    [InlineData(400, 0, false)]
+    [InlineData(400, 900, false)]
+    [InlineData(400, 400, false)]
+    public void DragReleaseOnlyHidesAfterCrossingAnEdge(double x, double y, bool expected)
+        => Assert.Equal(expected, EdgeHideGeometry.IsBeyondWorkArea(x, y, 100, 100, 0, 0, 1000, 1000));
+
+    [Fact]
+    public void DragReleaseUsesMonitorWorkAreaRatherThanScreenOrigin()
+    {
+        Assert.False(EdgeHideGeometry.IsBeyondWorkArea(-1920, 40, 240, 340, -1920, 40, 1920, 1000));
+        Assert.True(EdgeHideGeometry.IsBeyondWorkArea(-1921, 40, 240, 340, -1920, 40, 1920, 1000));
+        Assert.True(EdgeHideGeometry.IsBeyondWorkArea(-1000, 39, 240, 340, -1920, 40, 1920, 1000));
+    }
+
+    [Theory]
     [InlineData(10, 400, HideEdge.Left, -94, 400)]
     [InlineData(890, 400, HideEdge.Right, 994, 400)]
     [InlineData(400, 10, HideEdge.Top, 400, -94)]

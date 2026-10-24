@@ -108,6 +108,7 @@ public partial class MainWindow
         CompanionView.Visibility = companion ? Visibility.Visible : Visibility.Collapsed;
         CharacterCanvas.Width = _skin?.Definition.Width ?? 64;
         CharacterCanvas.Height = _skin?.Definition.Height ?? 64;
+        UsageBar.RenderTransform = new System.Windows.Media.TranslateTransform(0, _skin?.Definition.UsageBarOffsetY ?? 0);
         Width = Root.Width = companion ? Math.Max(160, _skin!.Definition.Width) : 64;
         Height = Root.Height = companion ? _skin!.Definition.Height + CompanionFooterHeight : 64;
         ClampToWorkArea();
@@ -138,7 +139,7 @@ public partial class MainWindow
             {
                 ShowVisible(animate: false);
                 UseBallAppearance();
-                ShowResetRing = _settings.ShowResetRing = false;
+                ShowResetRing = _settings.ShowResetRing = true;
             }
             else
             {
