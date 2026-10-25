@@ -48,3 +48,6 @@ CodexBall.Package/BundleArtifacts/
 appsettings.Local.json
 tmp
 docs/social-media/
+# Local native runtimes for the standalone Avalonia probe
+CodexBall.AvaloniaProbe/Native/
+CodexBall.Rendering/Native/

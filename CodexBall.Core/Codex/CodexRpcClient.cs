@@ -11,6 +11,7 @@ public sealed class CodexRpcClient : IAsyncDisposable
     private long _nextId;
     private CancellationTokenSource? _readerCts;
     private Task? _readerTask;
+    private Task? _stderrTask;
 
     public CodexRpcClient(CodexProcess process)
     {
@@ -27,7 +28,21 @@ public sealed class CodexRpcClient : IAsyncDisposable
         }
 
         _readerCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _readerTask = Task.Run(() => ReadLoopAsync(_readerCts.Token), CancellationToken.None);
+        var token = _readerCts.Token;
+        _readerTask = Task.Run(async () =>
+        {
+            try { await ReadLoopAsync(token); }
+            catch (Exception e) when (e is OperationCanceledException or IOException or ObjectDisposedException) { }
+            finally
+            {
+                foreach (var id in _pending.Keys) if (_pending.TryRemove(id, out var pending)) pending.TrySetException(new IOException("Codex app-server disconnected."));
+            }
+        }, CancellationToken.None);
+        _stderrTask = Task.Run(async () =>
+        {
+            try { while (_process.StandardError is { } stderr && await stderr.ReadLineAsync(token) is not null) { } }
+            catch (Exception e) when (e is OperationCanceledException or IOException or ObjectDisposedException) { }
+        }, CancellationToken.None);
         return true;
     }
 
@@ -140,9 +155,12 @@ public sealed class CodexRpcClient : IAsyncDisposable
         if (_readerCts is not null)
         {
             await _readerCts.CancelAsync();
-            _readerCts.Dispose();
+
         }
 
         await _process.DisposeAsync();
+        if (_readerTask is not null) await _readerTask;
+        if (_stderrTask is not null) await _stderrTask;
+        _readerCts?.Dispose();
     }
 }

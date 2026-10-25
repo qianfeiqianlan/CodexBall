@@ -74,3 +74,39 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  desktop-release:
+    name: Desktop ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    needs: build-and-release
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: macos-latest
+            rid: osx-x64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Prepare shared runtime and models
+        shell: pwsh
+        run: |
+          ./scripts/Setup-Desktop.ps1
+          ./scripts/Download-Live2DModels.ps1
+          ./scripts/Import-Live2DModels.ps1 -SourceDirectory ./artifacts/model-downloads
+          ./scripts/Test-Live2DModels.ps1
+      - run: dotnet test solutions/CodexBall.Desktop.sln -c Release
+      - name: Publish self-contained desktop bundle
+        shell: pwsh
+        run: ./scripts/Publish-Desktop.ps1 -Runtime '${{ matrix.rid }}' -Version ('${{ github.ref_name }}'.TrimStart('v'))
+      - name: Attach desktop asset to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/desktop/CodexBall-Desktop-*-${{ matrix.rid }}.zip

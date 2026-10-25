@@ -1,0 +1,22 @@
+name: Cross-platform desktop
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - run: dotnet test solutions/CodexBall.Desktop.sln -c Release
+      # Real GPU checks require the curated model/native assets and a graphical session.
+      - run: dotnet build CodexBall.AvaloniaProbe -c Release

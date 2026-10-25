@@ -4,11 +4,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Download](https://img.shields.io/badge/Download-Releases-blue.svg)](https://github.com/qianfeiqianlan/CodexBall/releases)
 
-CodexBall is a Windows-first desktop widget for keeping an eye on Codex rate-limit status.
+CodexBall is a desktop widget for keeping an eye on Codex rate-limit status. The shared Avalonia business app supports Windows and macOS; the original Windows WPF app remains available.
 
-Choose a 64 × 64 DIP WPF floating ring or a Live2D companion. Both can hide at a screen edge; the tray icon shows the short-window remaining percentage while Codex is active.
+Choose a 64 × 64 DIP floating ring or a Live2D companion. Both can hide at a screen edge; the tray icon shows the short-window remaining percentage while Codex is active.
 
 ![CodexBall preview](docs/assets/codexball-preview.svg)
+
+For the Windows/macOS business app, start with [cross-platform setup, downloads and validation](docs/cross-platform-desktop.md). Run `dotnet run --project CodexBall.Desktop`; the WPF-specific instructions below remain available for the legacy/Store application.
 
 ## Features
 
@@ -37,6 +39,8 @@ Haru has been removed. Only the curated bundled appearances are exposed; user mo
 Open the tray menu → **Language / 语言** and choose **Follow system / 跟随系统**, **中文**, or **English**. Changes take effect immediately and are saved. The default follows the operating system UI language at startup: Chinese (`zh`, including traditional Chinese system locales) selects the Chinese UI; other languages select English.
 
 ## Edge Hiding
+
+Dragging the widget to within 12 DIP of a work-area edge (or beyond it) and releasing automatically enables edge hiding. Moving it back into the interior keeps it visible. This applies to both the Avalonia and WPF apps.
 
 **Alt+H** toggles hiding toward the nearest work-area edge. Distances to left/right are divided by work-area width; distances to top/bottom by work-area height. Hover over the remaining strip to reveal the widget; revealing restores its previous visible position.
 
@@ -98,7 +102,7 @@ The app stores its own lightweight UI preferences locally in `%LOCALAPPDATA%\Cod
 
 ## Current Scope
 
-CodexBall is an MVP desktop utility. The project is currently Windows-first because the UI is implemented with WPF. Cross-platform UI support, installers, charts, and richer usage analytics are intentionally outside the initial scope.
+CodexBall is an MVP desktop utility. The shared desktop application is implemented with Avalonia for Windows and macOS. The original WPF implementation and its Store packaging remain Windows-only. Linux runtime acceptance, charts, and richer analytics are outside the current scope.
 
 ## Development Notes
 
@@ -116,3 +120,13 @@ Keep Codex protocol details in `CodexBall.Core`; WPF code should consume view mo
 ## License
 
 CodexBall is released under the MIT License.
+
+## Avalonia Cross-Platform Probe
+
+An isolated transparent-widget and Live2D prototype is available in [Avalonia probe instructions](docs/avalonia-probe.md). It does not replace the WPF application. Windows GPU smoke checks and cross-target publishing are documented separately from Linux/macOS runtime acceptance.
+
+## Windows and macOS business app
+
+Run `dotnet run --project CodexBall.Desktop` after preparing shared native libraries with `pwsh -File scripts/Setup-Desktop.ps1` and importing the curated models. It includes real Codex usage, all four companions, tray/menu-bar settings, live language switching, edge hiding, platform hotkeys, login startup and platform-specific updates.
+
+Use `dotnet test solutions/CodexBall.Desktop.sln -c Release` on macOS/Linux. Self-contained Windows and Mac `.app` ZIPs are generated with `scripts/Publish-Desktop.ps1`. See [full cross-platform instructions and acceptance boundaries](docs/cross-platform-desktop.md). Windows settings remain compatible; Mac settings live in `~/Library/Application Support/CodexBall/settings.json`.

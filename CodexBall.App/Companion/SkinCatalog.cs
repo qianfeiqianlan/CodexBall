@@ -11,11 +11,11 @@ public static class SkinCatalog
     public static string BuiltInDirectory => Path.Combine(AppContext.BaseDirectory, "Skins", "local-koharu");
     public static string LegacyDirectory => Path.Combine(AppContext.BaseDirectory, "Skins", "cream-pink");
 
-    public static IReadOnlyList<SkinEntry> Discover(out string? warning)
+    public static IReadOnlyList<SkinEntry> Discover(out string? warning, string? bundledDirectory = null)
     {
         var entries = new List<SkinEntry> { new(BallId, null, "CodexBall") };
         var errors = new List<string>();
-        var bundled = Path.Combine(AppContext.BaseDirectory, "Skins");
+        var bundled = bundledDirectory ?? Path.Combine(AppContext.BaseDirectory, "Skins");
         foreach (var id in new[] { "local-koharu", "local-haruto", "local-mao_pro", "local-mark_free_t04" })
         {
             var directory = Path.Combine(bundled, id);

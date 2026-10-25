@@ -6,6 +6,18 @@ public sealed record EdgeHidePlacement(HideEdge Edge, double VisibleLeft, double
 
 public static class EdgeHideGeometry
 {
+    // Use the drag's unclamped position. All arguments share the caller's coordinate units.
+    public static bool IsAtWorkAreaEdge(double left, double top, double width, double height,
+        double workLeft, double workTop, double workWidth, double workHeight, double snapDistance = 12)
+    {
+        if (new[] { left, top, width, height, workLeft, workTop, workWidth, workHeight, snapDistance }.Any(v => !double.IsFinite(v))
+            || width <= 0 || height <= 0 || workWidth <= 0 || workHeight <= 0 || snapDistance < 0)
+            throw new ArgumentOutOfRangeException(nameof(snapDistance));
+        return left - workLeft <= snapDistance || top - workTop <= snapDistance
+            || workLeft + workWidth - left - width <= snapDistance
+            || workTop + workHeight - top - height <= snapDistance;
+    }
+
     public static bool IsBeyondWorkArea(double left, double top, double width, double height,
         double workLeft, double workTop, double workWidth, double workHeight)
         => left < workLeft || top < workTop

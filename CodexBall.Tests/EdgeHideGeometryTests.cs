@@ -5,6 +5,29 @@ namespace CodexBall.Tests;
 public sealed class EdgeHideGeometryTests
 {
     [Theory]
+    [InlineData(0,400,true)]
+    [InlineData(12,400,true)]
+    [InlineData(13,400,false)]
+    [InlineData(888,400,true)]
+    [InlineData(887,400,false)]
+    [InlineData(400,12,true)]
+    [InlineData(400,13,false)]
+    [InlineData(400,888,true)]
+    [InlineData(400,887,false)]
+    [InlineData(-50,400,true)]
+    [InlineData(950,400,true)]
+    [InlineData(400,400,false)]
+    public void DragReleaseAutoHidesAtOrWithinTwelveUnitsOfAnyEdge(double x,double y,bool expected)
+        => Assert.Equal(expected,EdgeHideGeometry.IsAtWorkAreaEdge(x,y,100,100,0,0,1000,1000));
+
+    [Fact]
+    public void DragEdgeThresholdSupportsOffsetMonitorsAndScaledPixels()
+    {
+        Assert.True(EdgeHideGeometry.IsAtWorkAreaEdge(-1900,400,200,200,-1920,40,1920,1000,24));
+        Assert.False(EdgeHideGeometry.IsAtWorkAreaEdge(-1895,400,200,200,-1920,40,1920,1000,24));
+    }
+
+    [Theory]
     [InlineData(-1, 400, true)]
     [InlineData(901, 400, true)]
     [InlineData(400, -1, true)]

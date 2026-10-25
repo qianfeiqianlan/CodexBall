@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net9.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AllowUnsafeBlocks>true</AllowUnsafeBlocks></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../CodexBall.Core/CodexBall.Core.csproj" />
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Live2DCSharpSDK.OpenGL" Version="1.0.0" />
+    <PackageReference Include="OpenTK" Version="4.9.4" />
+    <Compile Include="../CodexBall.App/Companion/Live2D/OpenTkApi.cs" Link="OpenTkApi.cs" />
+    <Content Include="Native/**/*" Link="%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

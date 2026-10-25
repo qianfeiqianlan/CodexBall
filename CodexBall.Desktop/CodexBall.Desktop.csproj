@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>CodexBall.Desktop</AssemblyName><ApplicationIcon>../CodexBall.App/Assets/CodexBall.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../CodexBall.Rendering/CodexBall.Rendering.csproj" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <Compile Include="../CodexBall.App/Services/AppLocalization.cs" Link="Services/AppLocalization.cs" />
+    <Compile Include="../CodexBall.App/Services/AppSettings.cs" Link="Services/AppSettings.cs" />
+    <Compile Include="../CodexBall.App/Services/SettingsService.cs" Link="Services/SettingsService.cs" />
+    <Compile Include="../CodexBall.App/Companion/SkinCatalog.cs" Link="Companion/SkinCatalog.cs" />
+    <Compile Include="../CodexBall.App/Services/CodexProcessMonitor.cs" Link="Services/CodexProcessMonitor.cs" />
+    <Content Include="../CodexBall.App/Assets/CodexBall.ico" Link="CodexBall.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../CodexBall.App/Skins/**/*" Exclude="../CodexBall.App/Skins/cream-pink/**/*;../CodexBall.App/Skins/live2d-haru/**/*" Link="Skins/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -53,3 +53,13 @@ Keep Codex protocol JSON out of WPF code-behind. UI should consume `StatusBallVi
 - Languages: `system` (default), `zh-CN`, `en-US`. Resolve system language from startup `CurrentUICulture`: any `zh` uses Chinese, otherwise English. Apply changes immediately and persist them; new UI strings belong in `AppLocalization`.
 - In packaged builds, keep startup/self-upgrade controls hidden and skip GitHub update checks.
 - Settings live under `%LOCALAPPDATA%\CodexBall\settings.json`.
+
+## Shared desktop implementation
+
+- `CodexBall.Desktop` is the Avalonia business app for Windows and macOS; `CodexBall.App` retains the WPF/Store implementation.
+- `CodexBall.Rendering` contains shared Avalonia Live2D/PNG players and the Core-profile shader bridge; the original `OpenTkApi` source is linked. `CodexBall.AvaloniaProbe` now references this renderer.
+- Prepare shared native assets with `pwsh -File scripts/Setup-Desktop.ps1`; it uses the same pinned Native 5 R4.1 archive. Import curated models using the existing script.
+- Portable solution: `dotnet test solutions/CodexBall.Desktop.sln -c Release`. Full desktop GPU checks: `dotnet run --project CodexBall.Desktop -c Release -- --smoke`, with `--gl-core` to force the Mac rendering path on Windows.
+- The root solution includes both UI implementations. Keep WPF-only projects out of the portable solution.
+- Mac settings use `~/Library/Application Support/CodexBall/settings.json`. Alt+H/C map to Option+H/C via registered Carbon hotkeys, without global input monitoring.
+- Build self-contained packages using `scripts/Publish-Desktop.ps1 -Runtime win-x64|osx-arm64|osx-x64`. Distinguish cross-compilation from actual Mac business acceptance. Do not infer that the full business app passed merely because the earlier rendering probe passed.

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../CodexBall.Core/CodexBall.Core.csproj" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="Live2DCSharpSDK.OpenGL" Version="1.0.0" />
+    <PackageReference Include="OpenTK" Version="4.9.4" />
+    <Content Include="../CodexBall.App/Assets/CodexBall.ico" Link="probe.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../CodexBall.App/Skins/local-koharu/**/*" Link="Skins/local-koharu/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../CodexBall.App/Live2D/Licenses/**/*" Link="Licenses/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="../CodexBall.Rendering/CodexBall.Rendering.csproj" />
+  </ItemGroup>
+</Project>

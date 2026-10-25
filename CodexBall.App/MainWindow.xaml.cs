@@ -251,7 +251,7 @@ public partial class MainWindow : Window
     {
         var area = CurrentWorkArea();
         // Check the released position before clamping removes the crossed-edge signal.
-        var hideAtEdge = EdgeHideGeometry.IsBeyondWorkArea(Left, Top, Width, Height,
+        var hideAtEdge = EdgeHideGeometry.IsAtWorkAreaEdge(Left, Top, Width, Height,
             area.Left, area.Top, area.Width, area.Height);
         ClampToWorkArea();
         CaptureVisiblePosition();

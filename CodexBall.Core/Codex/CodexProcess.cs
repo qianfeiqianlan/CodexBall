@@ -35,6 +35,11 @@ public sealed class CodexProcess : IAsyncDisposable
             ? CreateCmdStartInfo(executable.Path)
             : CreateDirectStartInfo(executable.Path);
 
+        if (!OperatingSystem.IsWindows())
+        {
+            var executableDirectory = Path.GetDirectoryName(executable.Path)!;
+            startInfo.Environment["PATH"] = string.Join(Path.PathSeparator, new[] { executableDirectory, "/opt/homebrew/bin", "/usr/local/bin", startInfo.Environment.TryGetValue("PATH", out var inheritedPath) ? inheritedPath : "/usr/bin:/bin" });
+        }
         _process = Process.Start(startInfo);
         if (_process is null)
         {

@@ -40,3 +40,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 - [OpenTK 4.9.4](https://github.com/opentk/opentk): MIT, with native GLFW components under their respective notices.
 - [SkiaSharp 2.88.9](https://github.com/mono/SkiaSharp): MIT; underlying Skia and bundled dependencies retain their respective notices.
+
+## Standalone Avalonia probe
+
+The optional `CodexBall.AvaloniaProbe` uses [Avalonia 12.1.4](https://github.com/AvaloniaUI/Avalonia) and its Fluent theme under MIT. Its resolved rendering dependencies include SkiaSharp 3.119.4 and HarfBuzzSharp 8.3.1.3; those components and their native dependencies retain their own notices. This does not change the production WPF application's SkiaSharp version.
+
+`scripts/Setup-AvaloniaProbe.ps1` extracts Windows x64, Linux x64 and macOS universal Core binaries from the same hash-pinned Native 5 R4.1 archive. They retain the Live2D terms above. The probe copies the SDK license files and redistributable list into its `Licenses` output folder and retains Koharu's source ReadMe with the model.
+
+The full Avalonia business app (CodexBall.Desktop) shares these rendering dependencies and prepared Native 5 R4.1 libraries through CodexBall.Rendering. The native runtime preparation scripts retain the same pinned SDK hash and license files.
